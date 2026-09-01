@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>3-DOF 柔性壓電奈米定位平台 × ADRC｜快速吸收導讀</title>
+  <style>
+    :root {
+      --bg: #edf3f4;
+      --paper: #fffef9;
+      --paper-2: #f6faf9;
+      --ink: #173137;
+      --muted: #5f7478;
+      --line: #cad8d7;
+      --brand: #0f766e;
+      --brand-2: #12a594;
+      --brand-soft: #dff5ef;
+      --blue: #315ea8;
+      --blue-soft: #e8effb;
+      --amber: #a55d07;
+      --amber-soft: #fff1d2;
+      --red: #a23b3b;
+      --red-soft: #fde7e5;
+      --violet: #6952a3;
+      --violet-soft: #eee9fb;
+      --shadow: 0 18px 60px rgba(27, 57, 62, .10);
+      --radius: 20px;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #102225;
+      --paper: #172d31;
+      --paper-2: #1c363a;
+      --ink: #edf8f6;
+      --muted: #a7c1be;
+      --line: #36565a;
+      --brand: #58d6c3;
+      --brand-2: #75e6d5;
+      --brand-soft: #193f3d;
+      --blue: #9bbcf3;
+      --blue-soft: #213a5b;
+      --amber: #efbd6e;
+      --amber-soft: #4a371d;
+      --red: #f29b95;
+      --red-soft: #4a2929;
+      --violet: #c5b1fb;
+      --violet-soft: #352c54;
+      --shadow: 0 18px 60px rgba(0, 0, 0, .26);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 90% -5%, rgba(18, 165, 148, .18), transparent 28rem),
+        radial-gradient(circle at -5% 28%, rgba(49, 94, 168, .10), transparent 25rem),
+        var(--bg);
+      color: var(--ink);
+      font: 16px/1.75 "Segoe UI", "Microsoft JhengHei", system-ui, sans-serif;
+    }
+    a { color: var(--brand); text-underline-offset: 3px; }
+    button, input { font: inherit; }
+    code {
+      padding: .12em .38em;
+      border: 1px solid color-mix(in srgb, var(--line), transparent 25%);
+      border-radius: 6px;
+      background: var(--paper-2);
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: .91em;
+    }
+    .progress {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 100;
+      height: 4px;
+      background: transparent;
+    }
+    .progress > i {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand), #34d399);
+      box-shadow: 0 0 12px rgba(18, 165, 148, .55);
+    }
+    .shell {
+      display: grid;
+      grid-template-columns: 268px minmax(0, 1050px);
+      justify-content: center;
+      gap: 26px;
+      padding: 28px 26px 80px;
+    }
+    .sidebar {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--paper), transparent 3%);
+      box-shadow: var(--shadow);
+    }
+    .side-kicker {
+      color: var(--brand);
+      font-weight: 800;
+      letter-spacing: .08em;
+      font-size: .74rem;
+      text-transform: uppercase;
+    }
+    .sidebar h2 { margin: 4px 0 12px; font-size: 1.05rem; line-height: 1.35; }
+    .toc { display: grid; gap: 3px; }
+    .toc a {
+      padding: 6px 9px;
+      border-radius: 9px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .88rem;
+    }
+    .toc a:hover, .toc a.active { background: var(--brand-soft); color: var(--brand); }
+    .side-actions { display: grid; gap: 8px; margin-top: 16px; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+      color: var(--ink);
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .button.primary { border-color: var(--brand); background: var(--brand); color: #fff; }
+    body[data-theme="dark"] .button.primary { color: #0c2d2a; }
+    .source-mini { margin: 14px 0 0; color: var(--muted); font-size: .78rem; }
+    main { min-width: 0; }
+    .paper {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 58px 58px 46px;
+      background:
+        linear-gradient(125deg, color-mix(in srgb, var(--brand-soft), var(--paper) 28%), var(--paper) 62%);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 360px;
+      height: 360px;
+      right: -155px;
+      top: -150px;
+      border: 52px solid color-mix(in srgb, var(--brand), transparent 83%);
+      border-radius: 50%;
+    }
+    .eyebrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .pill, .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 800;
+    }
+    .pill { background: var(--brand); color: #fff; }
+    .tag.paper { background: var(--blue-soft); color: var(--blue); }
+    .tag.inference { background: var(--violet-soft); color: var(--violet); }
+    .tag.audit { background: var(--red-soft); color: var(--red); }
+    .tag.limit { background: var(--amber-soft); color: var(--amber); }
+    .hero h1 {
+      max-width: 820px;
+      margin: 0;
+      font-size: clamp(2.15rem, 5vw, 4.2rem);
+      line-height: 1.08;
+      letter-spacing: -.045em;
+    }
+    .hero h1 span { display: block; color: var(--brand); }
+    .hero .lead {
+      max-width: 750px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-size: 1.14rem;
+    }
+    .hero-meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 30px;
+    }
+    .hero-meta div {
+      padding: 13px 14px;
+      border: 1px solid color-mix(in srgb, var(--line), transparent 10%);
+      border-radius: 13px;
+      background: color-mix(in srgb, var(--paper), transparent 15%);
+    }
+    .hero-meta span { display: block; color: var(--muted); font-size: .74rem; }
+    .hero-meta strong { display: block; margin-top: 3px; line-height: 1.35; }
+    .toolbar {
+      position: sticky;
+      top: 8px;
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 22px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--paper), transparent 5%);
+      box-shadow: 0 8px 28px rgba(27, 57, 62, .10);
+      backdrop-filter: blur(10px);
+    }
+    .toolbar small { color: var(--muted); }
+    .segmented { display: inline-grid; grid-auto-flow: column; gap: 3px; padding: 3px; border-radius: 10px; background: var(--paper-2); }
+    .segmented button {
+      border: 0;
+      border-radius: 8px;
+      padding: 6px 11px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 750;
+    }
+    .segmented button.active { background: var(--paper); color: var(--brand); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .content { padding: 34px 58px 70px; }
+    section { scroll-margin-top: 92px; margin-top: 64px; }
+    section:first-child { margin-top: 16px; }
+    .section-head { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: start; margin-bottom: 24px; }
+    .section-no {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      background: var(--brand);
+      color: #fff;
+      font-weight: 900;
+    }
+    .section-head h2 { margin: 0; font-size: clamp(1.55rem, 3vw, 2.15rem); line-height: 1.25; }
+    .section-head p { margin: 5px 0 0; color: var(--muted); }
+    h3 { margin: 30px 0 12px; font-size: 1.26rem; }
+    p { margin: .7em 0; }
+    .one-line {
+      padding: 22px 24px;
+      border-left: 5px solid var(--brand);
+      border-radius: 0 16px 16px 0;
+      background: var(--brand-soft);
+      font-size: 1.2rem;
+      font-weight: 750;
+    }
+    .grid-2, .grid-3, .grid-4 { display: grid; gap: 14px; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      padding: 19px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper-2);
+    }
+    .card h3, .card h4 { margin: 0 0 8px; }
+    .card p:last-child { margin-bottom: 0; }
+    .card .big { display: block; color: var(--brand); font-size: 1.65rem; font-weight: 900; line-height: 1.15; }
+    .card .unit { color: var(--muted); font-size: .82rem; }
+    .decision { border-top: 4px solid var(--brand); }
+    .caution { border-top: 4px solid var(--amber); }
+    .audit-card { border-color: color-mix(in srgb, var(--red), transparent 55%); background: var(--red-soft); }
+    .callout {
+      margin: 20px 0;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper-2);
+    }
+    .callout strong:first-child { color: var(--brand); }
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      align-items: stretch;
+      gap: 9px;
+      margin: 22px 0;
+    }
+    .flow .node {
+      display: grid;
+      align-content: center;
+      min-height: 106px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--paper-2);
+      text-align: center;
+    }
+    .flow .node strong { color: var(--brand); font-size: 1.02rem; }
+    .flow .arrow { align-self: center; color: var(--brand); font-size: 1.45rem; font-weight: 900; }
+    .stage-lab {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 20px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(150deg, var(--paper-2), var(--paper));
+    }
+    .stage-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .stage-controls button {
+      padding: 8px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--paper);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .stage-controls button.active { border-color: var(--brand); background: var(--brand); color: #fff; }
+    .stage-wrap { min-height: 360px; display: grid; place-items: center; perspective: 800px; }
+    .stage {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      transform: rotateX(56deg) rotateZ(-25deg);
+      transform-style: preserve-3d;
+      transition: transform .45s ease;
+    }
+    .stage.mode-z { transform: rotateX(56deg) rotateZ(-25deg) translateZ(18px); }
+    .stage.mode-phi { transform: rotateX(48deg) rotateY(-9deg) rotateZ(-25deg); }
+    .stage.mode-theta { transform: rotateX(61deg) rotateY(10deg) rotateZ(-25deg); }
+    .frame { position: absolute; inset: 8px; border: 28px solid #2d5a69; border-radius: 18px; background: transparent; box-shadow: 0 16px 30px rgba(20, 49, 57, .22); }
+    .mirror { position: absolute; inset: 103px; border: 3px solid var(--brand); border-radius: 12px; background: linear-gradient(135deg, #b9fff1, #66d8c3); box-shadow: 0 0 0 11px rgba(18,165,148,.12); }
+    .act {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      width: 112px;
+      height: 34px;
+      border: 2px solid #6b7d83;
+      border-radius: 9px;
+      background: #d7e1e3;
+      color: #19343a;
+      font: 800 15px/1 var(--mono);
+      transition: background .25s, border-color .25s, box-shadow .25s;
+    }
+    .act.positive { border-color: #d85b4e; background: #ffd6d0; box-shadow: 0 0 0 5px rgba(216,91,78,.12); }
+    .act.negative { border-color: #377bd1; background: #d7e8ff; box-shadow: 0 0 0 5px rgba(55,123,209,.12); }
+    .a1 { left: 104px; top: 55px; }
+    .a2 { left: 26px; top: 143px; transform: rotate(90deg); }
+    .a3 { left: 104px; bottom: 55px; }
+    .a4 { right: 26px; top: 143px; transform: rotate(90deg); }
+    .axis-label { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px; color: var(--muted); }
+    .signs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin: 16px 0; }
+    .sign {
+      padding: 10px 5px;
+      border-radius: 10px;
+      background: var(--paper-2);
+      text-align: center;
+      font: 900 1rem/1 var(--mono);
+    }
+    .sign.pos { color: var(--red); background: var(--red-soft); }
+    .sign.neg { color: var(--blue); background: var(--blue-soft); }
+    .math-card {
+      overflow: hidden;
+      margin: 20px 0;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--brand);
+      border-radius: 16px;
+      background: var(--paper);
+      box-shadow: 0 8px 24px rgba(27, 57, 62, .07);
+    }
+    .math-card.audit-math { border-left-color: var(--red); background: color-mix(in srgb, var(--red-soft), var(--paper) 66%); }
+    .math-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 11px 15px;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper-2);
+    }
+    .math-head strong { font-size: .9rem; }
+    .math-head span { color: var(--muted); font-size: .76rem; }
+    .math-scroll {
+      overflow-x: auto;
+      padding: 22px 18px;
+      background: color-mix(in srgb, var(--paper), var(--brand-soft) 12%);
+    }
+    math.display-math {
+      display: block;
+      width: max-content;
+      min-width: 100%;
+      margin: 0 auto;
+      color: var(--ink);
+      font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif;
+      font-size: clamp(1.08rem, 2.1vw, 1.42rem);
+      text-align: center;
+    }
+    .math-caption {
+      padding: 13px 16px 15px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .math-caption strong { color: var(--ink); }
+    .math-legend {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 0 16px 16px;
+    }
+    .math-legend div {
+      padding: 10px 11px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper-2);
+      color: var(--muted);
+      font-size: .82rem;
+    }
+    .math-legend b { color: var(--brand); }
+    .math-sequence { display: grid; gap: 10px; padding: 14px; }
+    .math-step {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper-2);
+    }
+    .math-step > b { color: var(--brand); font-size: .85rem; text-align: center; }
+    .math-step math { display: block; color: var(--ink); font-family: "Cambria Math", "STIX Two Math", serif; font-size: 1.15rem; }
+    .math-step p { margin: 3px 0 0; color: var(--muted); font-size: .82rem; }
+    .math-inline {
+      display: inline-flex;
+      align-items: center;
+      margin: 0 .13em;
+      padding: .08em .4em;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper-2);
+      vertical-align: -.12em;
+    }
+    .math-inline math { color: var(--ink); font-family: "Cambria Math", "STIX Two Math", serif; font-size: 1.02em; }
+    .math-fallback { display: none; margin: 0; padding: 16px; white-space: pre-wrap; font: 600 .9rem/1.65 var(--mono); }
+    body.no-mathml math { display: none !important; }
+    body.no-mathml .math-fallback { display: block; }
+    .matrix-table, .evidence-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      font-size: .92rem;
+    }
+    .matrix-table th, .matrix-table td, .evidence-table th, .evidence-table td {
+      padding: 10px 11px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    .matrix-table th, .evidence-table th { background: var(--paper-2); color: var(--muted); font-size: .78rem; letter-spacing: .04em; }
+    details {
+      margin: 12px 0;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--paper-2);
+    }
+    summary { padding: 13px 15px; cursor: pointer; font-weight: 800; }
+    details > div { padding: 0 15px 16px; }
+    .ladrc-stack { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+    .state { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper-2); }
+    .state b { display: block; margin-bottom: 5px; color: var(--brand); font: 900 1.2rem/1 var(--mono); }
+    .disturbance-lab { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper-2); }
+    .disturbance-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+    .disturbance-buttons button { border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; background: var(--paper); color: var(--ink); cursor: pointer; }
+    .disturbance-buttons button.active { border-color: var(--violet); background: var(--violet-soft); color: var(--violet); font-weight: 800; }
+    #disturbanceText { min-height: 78px; margin: 14px 0 0; padding: 13px; border-radius: 11px; background: var(--paper); }
+    .metric-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; }
+    .metric { padding: 14px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper-2); }
+    .metric strong { display: block; color: var(--brand); font-size: 1.35rem; line-height: 1.2; }
+    .metric span { display: block; margin-top: 5px; color: var(--muted); font-size: .76rem; line-height: 1.35; }
+    .audit-list { display: grid; gap: 10px; counter-reset: audit; }
+    .audit-item {
+      position: relative;
+      padding: 17px 18px 17px 64px;
+      border: 1px solid color-mix(in srgb, var(--red), transparent 55%);
+      border-radius: 15px;
+      background: var(--red-soft);
+      counter-increment: audit;
+    }
+    .audit-item::before {
+      content: counter(audit);
+      position: absolute;
+      left: 17px;
+      top: 17px;
+      display: grid;
+      place-items: center;
+      width: 31px;
+      height: 31px;
+      border-radius: 9px;
+      background: var(--red);
+      color: #fff;
+      font-weight: 900;
+    }
+    .audit-item h3 { margin: 0 0 5px; font-size: 1rem; }
+    .audit-item p { margin: 0; }
+    .ref-controls { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 15px; }
+    .ref-controls button { padding: 7px 11px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); cursor: pointer; }
+    .ref-controls button.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .refs { display: grid; gap: 11px; counter-reset: refs; }
+    .ref {
+      display: grid;
+      grid-template-columns: 46px 1fr auto;
+      gap: 13px;
+      align-items: start;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--paper-2);
+      counter-increment: refs;
+    }
+    .ref::before { content: counter(refs); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); font-weight: 900; }
+    .ref h3 { margin: 0 0 3px; font-size: 1rem; }
+    .ref p { margin: 3px 0; }
+    .ref .why { color: var(--muted); font-size: .88rem; }
+    .ref .priority { white-space: nowrap; }
+    .ref[hidden] { display: none; }
+    .reading-path { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .reading-path div { position: relative; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper-2); }
+    .reading-path b { display: block; margin-bottom: 5px; color: var(--brand); }
+    .reading-path div:not(:last-child)::after { content: "→"; position: absolute; right: -18px; top: 44%; z-index: 2; color: var(--brand); font-size: 1.25rem; font-weight: 900; }
+    .glossary { columns: 2 280px; column-gap: 20px; }
+    .glossary div { break-inside: avoid; margin-bottom: 10px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper-2); }
+    .glossary dt { font-weight: 900; }
+    .glossary dd { margin: 4px 0 0; color: var(--muted); }
+    .footer { padding: 26px 58px 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: .82rem; }
+    body[data-depth="quick"] .depth-detail { display: none !important; }
+    .mobile-nav { display: none; }
+    @media (max-width: 1050px) {
+      .shell { grid-template-columns: minmax(0, 900px); padding: 14px 12px 60px; }
+      .sidebar { display: none; }
+      .mobile-nav { display: block; position: sticky; top: 0; z-index: 60; overflow-x: auto; white-space: nowrap; padding: 9px 10px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--paper), transparent 4%); }
+      .mobile-nav a { display: inline-block; margin-right: 4px; padding: 5px 9px; border-radius: 999px; background: var(--paper-2); color: var(--muted); text-decoration: none; font-size: .8rem; }
+      .hero-meta { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 760px) {
+      body { font-size: 15px; }
+      .paper { border-radius: 18px; }
+      .hero { padding: 38px 24px 30px; }
+      .content { padding: 25px 20px 55px; }
+      .toolbar { top: 50px; margin: 0 10px; }
+      .toolbar small { display: none; }
+      .grid-2, .grid-3, .grid-4, .stage-lab, .ladrc-stack, .reading-path, .math-legend { grid-template-columns: 1fr; }
+      .metric-grid { grid-template-columns: repeat(2, 1fr); }
+      .flow { grid-template-columns: 1fr; }
+      .flow .arrow { transform: rotate(90deg); justify-self: center; }
+      .stage-wrap { min-height: 310px; overflow: hidden; }
+      .stage { transform: scale(.78) rotateX(56deg) rotateZ(-25deg); }
+      .stage.mode-z { transform: scale(.78) rotateX(56deg) rotateZ(-25deg) translateZ(18px); }
+      .stage.mode-phi { transform: scale(.78) rotateX(48deg) rotateY(-9deg) rotateZ(-25deg); }
+      .stage.mode-theta { transform: scale(.78) rotateX(61deg) rotateY(10deg) rotateZ(-25deg); }
+      .ref { grid-template-columns: 38px 1fr; }
+      .ref .priority { grid-column: 2; }
+      .reading-path div:not(:last-child)::after { content: "↓"; right: auto; left: 49%; top: auto; bottom: -22px; }
+      .footer { padding: 24px 20px 32px; }
+      .evidence-table { display: block; overflow-x: auto; white-space: nowrap; }
+      .math-scroll { padding: 18px 12px; }
+      math.display-math { font-size: 1.05rem; }
+      .math-step { grid-template-columns: 1fr; }
+      .math-step > b { text-align: left; }
+    }
+    @media print {
+      body { background: #fff; color: #111; }
+      .shell { display: block; padding: 0; }
+      .sidebar, .mobile-nav, .toolbar, .progress, .stage-controls, .disturbance-buttons, .ref-controls { display: none !important; }
+      .paper { border: 0; box-shadow: none; }
+      .hero, .content { padding-left: 0; padding-right: 0; }
+      body[data-depth="quick"] .depth-detail { display: block !important; }
+      section { break-inside: avoid-page; }
+      a { color: #111; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+  </style>
+</head>
+<body data-depth="full" data-theme="light">
+  <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+  <nav class="mobile-nav" aria-label="行動版章節導覽">
+    <a href="#quick">3 分鐘</a><a href="#stage">平台</a><a href="#model">模型</a><a href="#adrc">ADRC</a><a href="#results">結果</a><a href="#audit">審讀</a><a href="#references">10 篇文獻</a>
+  </nav>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="side-kicker">Paper made readable</div>
+      <h2>3-DOF 柔性 PZT 平台 × ADRC</h2>
+      <nav class="toc" aria-label="文章目錄">
+        <a href="#quick">01｜三分鐘先懂</a>
+        <a href="#stage">02｜平台到底怎麼動</a>
+        <a href="#model">03｜模型只保留什麼</a>
+        <a href="#adrc">04｜ADRC 怎麼解耦</a>
+        <a href="#results">05｜實驗證明了什麼</a>
+        <a href="#audit">06｜公式與證據審讀</a>
+        <a href="#takeaway">07｜工程上怎麼用</a>
+        <a href="#references">08｜精選 10 篇文獻</a>
+        <a href="#glossary">09｜名詞速查</a>
+      </nav>
+      <div class="side-actions">
+        <a class="button primary" href="../../raw/sources/chen-liu-2022-3dof-flexible-piezo-nanopositioning-adrc.pdf">開啟原始 PDF</a>
+        <button class="button" type="button" id="themeButton">切換深色</button>
+        <button class="button" type="button" onclick="window.print()">列印／存成 PDF</button>
+      </div>
+      <p class="source-mini">來源：Chen &amp; Liu, <i>Micromachines</i> 2022, 13, 1591。此導讀把原文主張與工程審讀分開，不替論文補造未報告數據。</p>
+    </aside>
+
+    <main>
+      <article class="paper">
+        <header class="hero">
+          <div class="eyebrow">
+            <span class="pill">15 頁 → 可快速吸收</span>
+            <span class="tag paper">paper｜原文事實</span>
+            <span class="tag inference">inference｜工程解讀</span>
+            <span class="tag audit">audit｜需回查</span>
+          </div>
+          <h1>四片 PZT，<span>如何控制三個姿態？</span></h1>
+          <p class="lead">把「分佈參數柔性結構、幾何解耦矩陣、線性 ADRC」拆成一條可追蹤的因果鏈。先看平台怎麼動，再看控制器為什麼能把殘餘耦合當成擾動處理。</p>
+          <div class="hero-meta">
+            <div><span>論文</span><strong>Chen &amp; Liu, 2022</strong></div>
+            <div><span>輸入／輸出</span><strong>4 電壓 → <code>Z/φ/θ</code></strong></div>
+            <div><span>控制方法</span><strong>3 × LADRC + 配置矩陣</strong></div>
+            <div><span>本導讀證據邊界</span><strong>原文＋公式一致性審讀</strong></div>
+          </div>
+        </header>
+
+        <div class="toolbar" aria-label="閱讀工具列">
+          <small><b>閱讀深度</b>：先快速掌握，再展開公式與審讀</small>
+          <div class="segmented" role="group" aria-label="閱讀深度">
+            <button type="button" data-depth-button="quick">快速版</button>
+            <button type="button" class="active" data-depth-button="full">完整版</button>
+          </div>
+        </div>
+
+        <div class="content">
+          <section id="quick">
+            <div class="section-head"><span class="section-no">01</span><div><h2>三分鐘先懂整篇</h2><p>先建立正確骨架，不急著啃 20 條公式。</p></div></div>
+            <div class="one-line">作者先用一個固定的電壓配置矩陣，把三個虛擬控制命令分配到四片 PZT；再讓每個軸的 LADRC 估測並抵消剩下的耦合、磁滯、蠕變與外擾。</div>
+            <div class="grid-3" style="margin-top:16px">
+              <div class="card decision"><span class="big">4 → 3</span><span class="unit">四個致動器，三個平台輸出</span><p>同向彎曲產生 <code>Z</code>；兩組相反彎曲產生 <code>φ</code> 或 <code>θ</code>。</p></div>
+              <div class="card decision"><span class="big">模型先拆</span><span class="unit">分佈參數 → 等效 <code>m/k/c</code></span><p>把四片柔性樑各自換成等效力、剛性與阻尼，再投影到平台三個姿態。</p></div>
+              <div class="card decision"><span class="big">控制再補</span><span class="unit">幾何解耦＋擾動補償</span><p>矩陣負責主要分工；ESO 負責看見「模型沒說準的東西」。</p></div>
+            </div>
+
+            <div class="flow" aria-label="整篇論文的訊號流程">
+              <div class="node"><strong>三個目標</strong><span><code>Z*</code>、<code>φ*</code>、<code>θ*</code></span></div><div class="arrow">→</div>
+              <div class="node"><strong>三個 LADRC</strong><span>各自輸出虛擬命令 <code>u1/u2/u3</code></span></div><div class="arrow">→</div>
+              <div class="node"><strong>配置矩陣</strong><span>轉成 <code>V1…V4</code>，驅動四片 PZT</span></div>
+            </div>
+            <div class="flow" aria-label="平台回授流程">
+              <div class="node"><strong>柔性平台</strong><span>磁滯、蠕變、耦合、外擾同時存在</span></div><div class="arrow">→</div>
+              <div class="node"><strong>兩組 PSD</strong><span>量測並重建 <code>Z/φ/θ</code></span></div><div class="arrow">→</div>
+              <div class="node"><strong>ESO 更新</strong><span>估測狀態與總擾動 <code>z3</code></span></div>
+            </div>
+
+            <div class="callout"><strong>這篇真正值得學的不是「ADRC 很強」：</strong>而是它把解耦分成兩層：已知的致動器幾何用矩陣先處理；未知、時變或沒建準的耦合，再由 ESO 當成總擾動補償。這個分工比把全部問題都丟給單一控制器更清楚。</div>
+          </section>
+
+          <section id="stage">
+            <div class="section-head"><span class="section-no">02</span><div><h2>平台到底怎麼動</h2><p>固定看同一塊鏡面，只改四片 PZT 的正負組合。</p></div></div>
+            <div class="stage-lab">
+              <div>
+                <div class="stage-controls" role="group" aria-label="選擇平台運動模式">
+                  <button type="button" class="active" data-stage-mode="z"><code>Z</code> 同升同降</button>
+                  <button type="button" data-stage-mode="phi"><code>φ</code> 左右差動</button>
+                  <button type="button" data-stage-mode="theta"><code>θ</code> 前後差動</button>
+                </div>
+                <div class="stage-wrap" aria-label="3-DOF 平台示意動畫">
+                  <div class="stage mode-z" id="stageGraphic">
+                    <div class="frame"></div><div class="mirror"></div>
+                    <div class="act a1 positive">V1 +</div><div class="act a2 positive">V2 +</div>
+                    <div class="act a3 positive">V3 +</div><div class="act a4 positive">V4 +</div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <span class="tag paper">paper · Fig. 1–2 / Table 1</span>
+                <h3 id="stageTitle"><code>Z</code>：四片一起彎</h3>
+                <p id="stageText">四片致動器得到相同極性的電壓，平台中心鏡面主要做垂直平移。理想對稱下，旋轉項彼此抵消。</p>
+                <div class="signs" id="signRow"><div class="sign pos">V1 +</div><div class="sign pos">V2 +</div><div class="sign pos">V3 +</div><div class="sign pos">V4 +</div></div>
+                <p><span class="axis-label"><b>輸出</b> <code id="axisOutput">Z</code></span><span class="axis-label"><b>核心模式</b> <code id="axisPattern">[+ + + +]</code></span></p>
+                <div class="callout"><strong>像什麼？</strong> 四個人同時抬桌子，桌面升高；左右兩邊若一邊抬、一邊壓，桌面就傾斜。<br><small>類比限制：真正的 PZT 是彎曲樑，且四片剛性、黏著與磁滯不會完全一致。</small></div>
+              </div>
+            </div>
+
+            <h3>三個運動模式，其實是三個正交的符號圖樣</h3>
+            <table class="matrix-table">
+              <thead><tr><th>平台輸出</th><th><code>V1</code></th><th><code>V2</code></th><th><code>V3</code></th><th><code>V4</code></th><th>白話</th></tr></thead>
+              <tbody>
+                <tr><td><b><code>Z</code></b></td><td>+</td><td>+</td><td>+</td><td>+</td><td>共同模式（common mode）</td></tr>
+                <tr><td><b><code>φ</code></b></td><td>+</td><td>−</td><td>−</td><td>+</td><td>一組對角／側邊上升，另一組下降</td></tr>
+                <tr><td><b><code>θ</code></b></td><td>+</td><td>+</td><td>−</td><td>−</td><td>前後兩組做差動</td></tr>
+              </tbody>
+            </table>
+            <div class="callout depth-detail"><span class="tag inference">inference</span> 四個致動器卻只有三個理想剛體姿態，代表還有一個未被採用的輸入方向，例如 <code>[+ − + −]</code>。在理想平面約束下，它不對應 <code>Z/φ/θ</code> 的剛體運動，可能激發內力、翹曲或結構柔性模式。論文稱系統「over-driven」，但沒有深入分析這個 null-space（零空間）方向。</div>
+          </section>
+
+          <section id="model">
+            <div class="section-head"><span class="section-no">03</span><div><h2>模型只保留什麼</h2><p>從一片會彎的連續樑，縮成平台看得懂的三個二階方程。</p></div></div>
+            <div class="reading-path">
+              <div><b>① 每片 PZT</b>薄片＋銅基板是一根分佈參數的彎曲樑。</div>
+              <div><b>② 等效化</b>用 <code>m</code>、<code>k</code>、<code>c</code> 與 <code>K_V</code> 代表質量、剛性、阻尼、電壓轉力。</div>
+              <div><b>③ 幾何投影</b>把四個端點變形 <code>Δd1…Δd4</code> 換成 <code>Z/φ/θ</code>。</div>
+              <div><b>④ 三個二階模態</b>共同模式一個、旋轉模式兩個。</div>
+            </div>
+
+            <h3>能量法的角色：不是炫技，而是把四片樑對平台的影響加總</h3>
+            <div class="math-card">
+              <div class="math-head"><strong>平台的動能與四片致動器的彈性位能</strong><span>paper · Eq. 2–3</span></div>
+              <div class="math-scroll">
+                <math class="display-math" display="block" aria-label="動能 T 等於二分之一 m 乘 Z 速度平方，加二分之一 J 乘 phi 角速度平方，加二分之一 J 乘 theta 角速度平方。位能 V 等於二分之一 k 乘四個端點變形平方的總和。">
+                  <mtable columnalign="right center left" rowspacing="1.05em">
+                    <mtr>
+                      <mtd><mi>T</mi></mtd><mtd><mo>=</mo></mtd>
+                      <mtd><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>m</mi><msup><mover accent="true"><mi>Z</mi><mo>˙</mo></mover><mn>2</mn></msup><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>J</mi><msup><mover accent="true"><mi>φ</mi><mo>˙</mo></mover><mn>2</mn></msup><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>J</mi><msup><mover accent="true"><mi>θ</mi><mo>˙</mo></mover><mn>2</mn></msup></mtd>
+                    </mtr>
+                    <mtr>
+                      <mtd><mi>V</mi></mtd><mtd><mo>=</mo></mtd>
+                      <mtd><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>k</mi><mrow><mo>(</mo><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mn>4</mn></msubsup><msup><mrow><mi>Δ</mi><msub><mi>d</mi><mi>i</mi></msub></mrow><mn>2</mn></msup><mo>)</mo></mrow></mtd>
+                    </mtr>
+                  </mtable>
+                </math>
+                <pre class="math-fallback">T = (1/2)m(dZ/dt)^2 + (1/2)J(dφ/dt)^2 + (1/2)J(dθ/dt)^2
+V = (1/2)k Σ[i=1..4](Δd_i)^2</pre>
+              </div>
+              <div class="math-caption"><strong>怎麼讀：</strong><code>T</code> 記錄整塊平台移動與旋轉的能量；<code>V</code> 把四片 PZT 各自彎曲所儲存的能量加總。Lagrange 方程就是從這兩種能量推出運動方程。</div>
+              <div class="math-legend"><div><b><code>m</code></b>：等效平移質量</div><div><b><code>J</code></b>：等效轉動慣量</div><div><b><code>Δd_i</code></b>：第 <code>i</code> 片 PZT 的端點變形</div></div>
+            </div>
+            <p><span class="tag paper">paper · Eq. 2–8</span> 作者令
+              <span class="math-inline"><math aria-label="J 等於 m 乘 l m 平方除以 3"><mi>J</mi><mo>=</mo><mfrac><mrow><mi>m</mi><msubsup><mi>l</mi><mi>m</mi><mn>2</mn></msubsup></mrow><mn>3</mn></mfrac></math></span>，並用
+              <span class="math-inline"><math aria-label="F i 等於 K V 乘 V i"><msub><mi>F</mi><mi>i</mi></msub><mo>=</mo><msub><mi>K</mi><mi>V</mi></msub><msub><mi>V</mi><mi>i</mi></msub></math></span>
+              把致動電壓換成等效力。這讓控制器最後仍可直接輸出四個電壓。</p>
+
+            <h3>先看物理結構，不先背係數</h3>
+            <div class="math-card">
+              <div class="math-head"><strong>三個平台輸出，各自是一個二階運動方程</strong><span>結構式；係數倍率見第 06 節</span></div>
+              <div class="math-sequence">
+                <div class="math-step"><b><code>Z</code> 平移</b><div>
+                  <math aria-label="m 乘 Z 二階微分，加 C Z 乘 Z 一階微分，加 K Z 乘 Z，等於 K V 乘四個電壓的總和"><mrow><mi>m</mi><mover accent="true"><mi>Z</mi><mo>¨</mo></mover><mo>+</mo><msub><mi>C</mi><mi>Z</mi></msub><mover accent="true"><mi>Z</mi><mo>˙</mo></mover><mo>+</mo><msub><mi>K</mi><mi>Z</mi></msub><mi>Z</mi><mo>=</mo><msub><mi>K</mi><mi>V</mi></msub><mrow><mo>(</mo><msub><mi>V</mi><mn>1</mn></msub><mo>+</mo><msub><mi>V</mi><mn>2</mn></msub><mo>+</mo><msub><mi>V</mi><mn>3</mn></msub><mo>+</mo><msub><mi>V</mi><mn>4</mn></msub><mo>)</mo></mrow></mrow></math>
+                  <p>四片 PZT 同向出力，所以右側是四個電壓相加。</p>
+                </div></div>
+                <div class="math-step"><b><code>φ</code> 旋轉</b><div>
+                  <math aria-label="J 乘 phi 二階微分，加 C phi 乘 phi 一階微分，加 K phi 乘 phi，等於 K V 乘 l m 乘 V1 減 V2 減 V3 加 V4"><mrow><mi>J</mi><mover accent="true"><mi>φ</mi><mo>¨</mo></mover><mo>+</mo><msub><mi>C</mi><mi>φ</mi></msub><mover accent="true"><mi>φ</mi><mo>˙</mo></mover><mo>+</mo><msub><mi>K</mi><mi>φ</mi></msub><mi>φ</mi><mo>=</mo><msub><mi>K</mi><mi>V</mi></msub><msub><mi>l</mi><mi>m</mi></msub><mrow><mo>(</mo><msub><mi>V</mi><mn>1</mn></msub><mo>−</mo><msub><mi>V</mi><mn>2</mn></msub><mo>−</mo><msub><mi>V</mi><mn>3</mn></msub><mo>+</mo><msub><mi>V</mi><mn>4</mn></msub><mo>)</mo></mrow></mrow></math>
+                  <p><code>V1/V4</code> 與 <code>V2/V3</code> 形成差動；<code>l_m</code> 把力換成轉矩。</p>
+                </div></div>
+                <div class="math-step"><b><code>θ</code> 旋轉</b><div>
+                  <math aria-label="J 乘 theta 二階微分，加 C theta 乘 theta 一階微分，加 K theta 乘 theta，等於 K V 乘 l m 乘負 V1 減 V2 加 V3 加 V4"><mrow><mi>J</mi><mover accent="true"><mi>θ</mi><mo>¨</mo></mover><mo>+</mo><msub><mi>C</mi><mi>θ</mi></msub><mover accent="true"><mi>θ</mi><mo>˙</mo></mover><mo>+</mo><msub><mi>K</mi><mi>θ</mi></msub><mi>θ</mi><mo>=</mo><msub><mi>K</mi><mi>V</mi></msub><msub><mi>l</mi><mi>m</mi></msub><mrow><mo>(</mo><mo>−</mo><msub><mi>V</mi><mn>1</mn></msub><mo>−</mo><msub><mi>V</mi><mn>2</mn></msub><mo>+</mo><msub><mi>V</mi><mn>3</mn></msub><mo>+</mo><msub><mi>V</mi><mn>4</mn></msub><mo>)</mo></mrow></mrow></math>
+                  <p><code>V1/V2</code> 與 <code>V3/V4</code> 形成另一個差動方向。</p>
+                </div></div>
+              </div>
+              <pre class="math-fallback">Z:     m*Zdd + C_Z*Zd + K_Z*Z = K_V*(V1+V2+V3+V4)
+phi:   J*phidd + C_phi*phid + K_phi*phi = K_V*l_m*(V1-V2-V3+V4)
+theta: J*thetadd + C_theta*thetad + K_theta*theta = K_V*l_m*(-V1-V2+V3+V4)</pre>
+              <div class="math-caption"><strong>閱讀重點：</strong>左邊永遠是「慣性＋阻尼＋彈簧」；真正決定三個軸怎麼分工的是右邊四個電壓的正負組合。這裡刻意以 <code>C/K</code> 保留物理結構，避免把原文可疑倍率當成已確認係數。</div>
+            </div>
+            <div class="grid-3">
+              <div class="card"><h4><code>m / J</code></h4><p>平台的等效平移質量與轉動慣量，決定加速難易。</p></div>
+              <div class="card"><h4><code>k / c</code></h4><p>每片柔性 PZT 的等效剛性與阻尼，決定共振與衰減。</p></div>
+              <div class="card"><h4><code>K_V</code></h4><p>電壓到等效力的轉換係數，連結電氣命令與機械輸出。</p></div>
+            </div>
+
+            <details class="depth-detail"><summary>展開：幾何映射到底在做什麼？</summary><div>
+              <p>四個端點必須近似共面，所以每個端點位移都可以寫成「平均高度＋兩個小角度造成的高度差」。原文 Eq. 5 的符號結構為：</p>
+              <div class="math-card">
+                <div class="math-head"><strong>平台姿態 → 四個 PZT 端點變形</strong><span>paper · Eq. 5</span></div>
+                <div class="math-scroll">
+                  <math class="display-math" display="block" aria-label="四個端點變形向量等於幾何矩陣 B 乘以 Z phi theta 姿態向量">
+                    <mrow>
+                      <mo>[</mo><mtable rowspacing=".35em"><mtr><mtd><mi>Δ</mi><msub><mi>d</mi><mn>1</mn></msub></mtd></mtr><mtr><mtd><mi>Δ</mi><msub><mi>d</mi><mn>2</mn></msub></mtd></mtr><mtr><mtd><mi>Δ</mi><msub><mi>d</mi><mn>3</mn></msub></mtd></mtr><mtr><mtd><mi>Δ</mi><msub><mi>d</mi><mn>4</mn></msub></mtd></mtr></mtable><mo>]</mo>
+                      <mo>=</mo>
+                      <mo>[</mo><mtable columnspacing="1.25em" rowspacing=".35em">
+                        <mtr><mtd><mn>1</mn></mtd><mtd><msub><mi>l</mi><mi>m</mi></msub></mtd><mtd><mo>−</mo><msub><mi>l</mi><mi>m</mi></msub></mtd></mtr>
+                        <mtr><mtd><mn>1</mn></mtd><mtd><mo>−</mo><msub><mi>l</mi><mi>m</mi></msub></mtd><mtd><mo>−</mo><msub><mi>l</mi><mi>m</mi></msub></mtd></mtr>
+                        <mtr><mtd><mn>1</mn></mtd><mtd><mo>−</mo><msub><mi>l</mi><mi>m</mi></msub></mtd><mtd><msub><mi>l</mi><mi>m</mi></msub></mtd></mtr>
+                        <mtr><mtd><mn>1</mn></mtd><mtd><msub><mi>l</mi><mi>m</mi></msub></mtd><mtd><msub><mi>l</mi><mi>m</mi></msub></mtd></mtr>
+                      </mtable><mo>]</mo>
+                      <mo>[</mo><mtable rowspacing=".55em"><mtr><mtd><mi>Z</mi></mtd></mtr><mtr><mtd><mi>φ</mi></mtd></mtr><mtr><mtd><mi>θ</mi></mtd></mtr></mtable><mo>]</mo>
+                    </mrow>
+                  </math>
+                  <pre class="math-fallback">[Δd1]   [1   l_m  -l_m] [Z]
+[Δd2] = [1  -l_m  -l_m] [φ]
+[Δd3]   [1  -l_m   l_m] [θ]
+[Δd4]   [1   l_m   l_m]</pre>
+                </div>
+                <div class="math-caption"><strong>逐欄讀矩陣：</strong>第一欄都是 <code>1</code>，所以 <code>Z</code> 讓四點同向；後兩欄各有兩正兩負，所以 <code>φ</code> 與 <code>θ</code> 讓兩側形成高度差。</div>
+              </div>
+              <p>這個式子很直覺：<code>Z</code> 對四點都同號；旋轉則讓兩側一正一負。真正需要回查的是原文 Eq. 4 的反向映射倍率，因為它與 Eq. 5 直接相乘不會得到單位矩陣。</p>
+            </div></details>
+          </section>
+
+          <section id="adrc">
+            <div class="section-head"><span class="section-no">04</span><div><h2>ADRC 怎麼完成「第二層解耦」</h2><p>矩陣處理已知幾何；ESO 追蹤沒建準的殘差。</p></div></div>
+            <div class="one-line">每個軸都假裝自己是「一個二階系統＋一包不知道的總擾動」，再即時估測這包擾動並從命令中扣掉。</div>
+
+            <h3>一步一步看 <code>Z</code> 軸</h3>
+            <div class="math-card">
+              <div class="math-head"><strong>ADRC 先把每個軸統一寫成同一種形式</strong><span>paper · Eq. 14</span></div>
+              <div class="math-scroll">
+                <math class="display-math" display="block" aria-label="y 的二階微分等於總擾動 f 加上名義輸入增益 b0 乘控制命令 u">
+                  <mrow><mover accent="true"><mi>y</mi><mo>¨</mo></mover><mo>=</mo><mi>f</mi><mrow><mo>(</mo><mi>y</mi><mo>,</mo><mover accent="true"><mi>y</mi><mo>˙</mo></mover><mo>,</mo><mi>ω</mi><mo>)</mo></mrow><mo>+</mo><msub><mi>b</mi><mn>0</mn></msub><mi>u</mi></mrow>
+                </math>
+                <pre class="math-fallback">d²y/dt² = f(y, dy/dt, disturbance) + b0*u</pre>
+              </div>
+              <div class="math-legend"><div><b><code>y</code></b>：目前正在控制的 <code>Z</code>、<code>φ</code> 或 <code>θ</code></div><div><b><code>f</code></b>：內部動態、耦合、參數誤差與外擾的總和</div><div><b><code>b0·u</code></b>：控制器預期能直接造成的加速度</div></div>
+              <div class="math-caption"><strong>白話：</strong>平台的實際加速度，一部分來自我們下的命令；其餘暫時說不準的影響，全部先交給 <code>f</code> 表示。</div>
+            </div>
+            <div class="ladrc-stack">
+              <div class="state"><b><code>z1</code></b>估測位置／角度 <code>y</code>。它回答：「平台現在在哪？」</div>
+              <div class="state"><b><code>z2</code></b>估測速度 <code>ẏ</code>。它回答：「平台往哪裡、跑多快？」</div>
+              <div class="state"><b><code>z3</code></b>估測總擾動 <code>f</code>。它回答：「除了命令以外，還有什麼在推平台？」</div>
+            </div>
+
+            <div class="disturbance-lab depth-detail">
+              <strong>點一個擾動，看它怎麼被收進 <code>z3</code>：</strong>
+              <div class="disturbance-buttons" style="margin-top:10px">
+                <button type="button" class="active" data-disturbance="coupling">軸間耦合</button>
+                <button type="button" data-disturbance="hysteresis">PZT 磁滯／蠕變</button>
+                <button type="button" data-disturbance="mismatch">四片不一致</button>
+                <button type="button" data-disturbance="external">外部擾動</button>
+              </div>
+              <p id="disturbanceText">例如只命令 <code>Z</code>，四片 PZT 的增益卻不完全一樣，於是 <code>φ/θ</code> 也開始動。每個旋轉軸的 ESO 會把這個「未由自身命令造成的加速度」估成總擾動，再由 <span class="math-inline"><math aria-label="負 z3 除以 b0"><mfrac><mrow><mo>−</mo><msub><mi>z</mi><mn>3</mn></msub></mrow><msub><mi>b</mi><mn>0</mn></msub></mfrac></math></span> 補回。</p>
+            </div>
+
+            <h3>標準 LADRC 的可實作寫法</h3>
+            <div class="math-card">
+              <div class="math-head"><strong>LESO：每一拍如何更新三個估測狀態</strong><span>依 Eq. 17、Fig. 6 與標準 LESO 整理</span></div>
+              <div class="math-scroll">
+                <math class="display-math" display="block" aria-label="觀測誤差 e 等於 y 減 z1；z1 z2 z3 的三條觀測器更新方程">
+                  <mrow><mo>{</mo><mtable columnalign="right center left" rowspacing=".65em">
+                    <mtr><mtd><mi>e</mi></mtd><mtd><mo>=</mo></mtd><mtd><mi>y</mi><mo>−</mo><msub><mi>z</mi><mn>1</mn></msub></mtd></mtr>
+                    <mtr><mtd><mover accent="true"><msub><mi>z</mi><mn>1</mn></msub><mo>˙</mo></mover></mtd><mtd><mo>=</mo></mtd><mtd><msub><mi>z</mi><mn>2</mn></msub><mo>+</mo><msub><mi>β</mi><mn>1</mn></msub><mi>e</mi></mtd></mtr>
+                    <mtr><mtd><mover accent="true"><msub><mi>z</mi><mn>2</mn></msub><mo>˙</mo></mover></mtd><mtd><mo>=</mo></mtd><mtd><msub><mi>z</mi><mn>3</mn></msub><mo>+</mo><msub><mi>b</mi><mn>0</mn></msub><mi>u</mi><mo>+</mo><msub><mi>β</mi><mn>2</mn></msub><mi>e</mi></mtd></mtr>
+                    <mtr><mtd><mover accent="true"><msub><mi>z</mi><mn>3</mn></msub><mo>˙</mo></mover></mtd><mtd><mo>=</mo></mtd><mtd><msub><mi>β</mi><mn>3</mn></msub><mi>e</mi></mtd></mtr>
+                  </mtable></mrow>
+                </math>
+                <pre class="math-fallback">e = y - z1
+dz1/dt = z2 + beta1*e
+dz2/dt = z3 + b0*u + beta2*e
+dz3/dt = beta3*e</pre>
+              </div>
+              <div class="math-caption"><strong>因果順序：</strong>先算量測與估測的差 <code>e</code>，再用同一個誤差依不同增益修正位置、速度與總擾動。沒有 <code>e</code>，觀測器就無法被真實量測拉回來。</div>
+            </div>
+            <div class="math-card">
+              <div class="math-head"><strong>把三個觀測器增益收斂成一個頻寬旋鈕</strong><span>paper · Eq. 17</span></div>
+              <div class="math-scroll">
+                <math class="display-math" display="block" aria-label="beta1 beta2 beta3 向量等於 3 omega o、3 omega o 平方、omega o 三次方向量">
+                  <mrow><mo>[</mo><msub><mi>β</mi><mn>1</mn></msub><mspace width=".7em"/><msub><mi>β</mi><mn>2</mn></msub><mspace width=".7em"/><msub><mi>β</mi><mn>3</mn></msub><mo>]</mo><mo>=</mo><mo>[</mo><mn>3</mn><msub><mi>ω</mi><mi>o</mi></msub><mspace width=".7em"/><mn>3</mn><msubsup><mi>ω</mi><mi>o</mi><mn>2</mn></msubsup><mspace width=".7em"/><msubsup><mi>ω</mi><mi>o</mi><mn>3</mn></msubsup><mo>]</mo></mrow>
+                </math>
+                <pre class="math-fallback">[beta1 beta2 beta3] = [3*omega_o, 3*omega_o^2, omega_o^3]</pre>
+              </div>
+              <div class="math-caption"><code>ω_o</code> 越大，ESO 越快追上狀態與擾動；代價是更容易把量測雜訊和高頻柔性模態一起放大。</div>
+            </div>
+            <p><span class="tag audit">audit</span> 這是依據原文的 ESO 增益、Fig. 6 訊號流與標準線性 ESO 所整理的「較合理實作形式」。原文 Eq. 16 印成
+              <span class="math-inline"><math aria-label="z hat 的一階微分等於 A z hat 加 B u 加 L f 的一階微分"><mover accent="true"><mover accent="true"><mi>z</mi><mo>^</mo></mover><mo>˙</mo></mover><mo>=</mo><mi>A</mi><mover accent="true"><mi>z</mi><mo>^</mo></mover><mo>+</mo><mi>B</mi><mi>u</mi><mo>+</mo><mi>L</mi><mover accent="true"><mi>f</mi><mo>˙</mo></mover></math></span>，沒有量測誤差注入，照字面無法成為可校正的觀測器。</p>
+
+            <div class="math-card">
+              <div class="math-head"><strong>控制命令：先追蹤，再扣除估測擾動</strong><span>paper · Eq. 18–20</span></div>
+              <div class="math-scroll">
+                <math class="display-math" display="block" aria-label="uc 等於 omega c 平方乘 r 減 z1，加 2 omega c 乘 r 的一階微分減 z2；u 等於 uc 減 z3 再除以 b0">
+                  <mtable columnalign="right center left" rowspacing="1em">
+                    <mtr><mtd><msub><mi>u</mi><mi>c</mi></msub></mtd><mtd><mo>=</mo></mtd><mtd><msubsup><mi>ω</mi><mi>c</mi><mn>2</mn></msubsup><mrow><mo>(</mo><mi>r</mi><mo>−</mo><msub><mi>z</mi><mn>1</mn></msub><mo>)</mo></mrow><mo>+</mo><mn>2</mn><msub><mi>ω</mi><mi>c</mi></msub><mrow><mo>(</mo><mover accent="true"><mi>r</mi><mo>˙</mo></mover><mo>−</mo><msub><mi>z</mi><mn>2</mn></msub><mo>)</mo></mrow></mtd></mtr>
+                    <mtr><mtd><mi>u</mi></mtd><mtd><mo>=</mo></mtd><mtd><mfrac><mrow><msub><mi>u</mi><mi>c</mi></msub><mo>−</mo><msub><mi>z</mi><mn>3</mn></msub></mrow><msub><mi>b</mi><mn>0</mn></msub></mfrac></mtd></mtr>
+                  </mtable>
+                </math>
+                <pre class="math-fallback">u_c = omega_c^2*(r-z1) + 2*omega_c*(dr/dt-z2)
+u = (u_c-z3)/b0</pre>
+              </div>
+              <div class="math-legend"><div><b>第一項</b>：位置誤差修正</div><div><b>第二項</b>：速度誤差修正</div><div><b><code>−z3</code></b>：把 ESO 看見的總擾動反向扣除</div></div>
+            </div>
+            <div class="grid-2">
+              <div class="card"><h4>控制頻寬 <code>ωc</code></h4><p>決定想要多快追蹤。理想閉迴路被配置成雙重極點 <span class="math-inline"><math aria-label="s 加 omega c 的平方"><msup><mrow><mo>(</mo><mi>s</mi><mo>+</mo><msub><mi>ω</mi><mi>c</mi></msub><mo>)</mo></mrow><mn>2</mn></msup></math></span>。</p></div>
+              <div class="card caution"><h4>觀測器頻寬 <code>ωo</code></h4><p>論文建議 <span class="math-inline"><math aria-label="omega o 約等於三到五倍 omega c"><msub><mi>ω</mi><mi>o</mi></msub><mo>≈</mo><mrow><mo>(</mo><mn>3</mn><mo>∼</mo><mn>5</mn><mo>)</mo></mrow><msub><mi>ω</mi><mi>c</mi></msub></math></span>。越高估測越快，但感測雜訊與未建模高頻模態也更容易被放大。</p></div>
+            </div>
+            <div class="callout depth-detail"><strong>控制架構的真正名稱可理解為：</strong>「靜態致動器配置（control allocation）＋三個 SISO LADRC」。它不是完整 MIMO 觀測器；軸間動態耦合是被分別塞進三個 <code>z3</code>。這個做法簡單、可調，但耦合若太快或接近結構共振，未必能被當成慢變擾動妥善處理。</div>
+          </section>
+
+          <section id="results">
+            <div class="section-head"><span class="section-no">05</span><div><h2>實驗證明了什麼，也沒有證明什麼</h2><p>把報告數據、圖上觀察與作者判斷分開。</p></div></div>
+            <div class="metric-grid">
+              <div class="metric"><strong>17.6² × 0.6</strong><span>mm，平台外形尺寸</span></div>
+              <div class="metric"><strong>±90 V</strong><span>測試驅動範圍</span></div>
+              <div class="metric"><strong>49.8 μm</strong><span>Table 4 的 <code>Z</code> 總行程</span></div>
+              <div class="metric"><strong>10.2 / 10.3</strong><span>mrad，<code>θ/φ</code> 總角度範圍</span></div>
+              <div class="metric"><strong>482 / 721 / 788</strong><span>Hz，<code>Z/θ/φ</code> 列示頻率</span></div>
+            </div>
+
+            <h3>證據分層</h3>
+            <table class="evidence-table">
+              <thead><tr><th>主張</th><th>原文證據</th><th>目前可接受到哪裡</th></tr></thead>
+              <tbody>
+                <tr><td>三個姿態能被四片 PZT 產生</td><td><span class="tag paper">paper</span> FEA 模式、符號表、實物平台</td><td>有結構與實驗支持；軸定義與校正矩陣仍需更完整資料。</td></tr>
+                <tr><td>模型能描述主要輸出</td><td><span class="tag paper">paper</span> 實驗曲線與理論／參考線大致一致</td><td>支持主要趨勢；未提供完整 FRF、參數辨識誤差或跨工作點殘差。</td></tr>
+                <tr><td>LADRC 能改善追蹤與抗擾</td><td><span class="tag paper">paper</span> Fig. 10–11 的追蹤與 10 V 擾動測試</td><td>有定性與局部實驗支持；缺少 RMS、峰值誤差、settling time 與對照控制器。</td></tr>
+                <tr><td>50 Hz 正弦誤差約 0.86%</td><td><span class="tag limit">引用 [22]</span> 本文文字引用前作模擬</td><td>不能當成本篇硬體實驗成績。</td></tr>
+                <tr><td>兩個 PSD 可量到三輸出</td><td><span class="tag paper">paper</span> Fig. 8–9 示意與設備照片</td><td>原理可行，但未交代完整量測反解、標定、噪聲與不確定度。</td></tr>
+              </tbody>
+            </table>
+
+            <div class="grid-2">
+              <div class="card decision"><h4>比較有說服力</h4><p>平台確實能在 <code>Z/φ/θ</code> 三方向運動；控制架構可以在步階、三角追蹤與注入擾動下運作；外形很薄且行程／角度具競爭力。</p></div>
+              <div class="card caution"><h4>還不能下結論</h4><p>閉迴路頻寬、相位裕度、噪聲放大、跨軸耦合比、熱漂移、長時間 creep、飽和時的穩定性與 null-space 內力都沒有被充分量化。</p></div>
+            </div>
+          </section>
+
+          <section id="audit" class="depth-detail">
+            <div class="section-head"><span class="section-no">06</span><div><h2>公式與證據審讀：讀這篇時要踩煞車的地方</h2><p>不是否定論文，而是避免把可疑印刷式當成可直接實作的規格。</p></div></div>
+            <div class="audit-list">
+              <article class="audit-item"><h3>Eq. 4 與 Eq. 5 不是互逆</h3><p>原文 Eq. 4 的旋轉列使用 <span class="math-inline"><math aria-label="正負一除以 l m"><mo>±</mo><mfrac><mn>1</mn><msub><mi>l</mi><mi>m</mi></msub></mfrac></math></span>，Eq. 5 卻使用 <span class="math-inline"><math aria-label="正負 l m"><mo>±</mo><msub><mi>l</mi><mi>m</mi></msub></math></span>。兩式相乘在旋轉軸得到 <code>4</code> 而非 <code>1</code>。若 Eq. 5 的幾何位置成立，Eq. 4 較可能缺少 <span class="math-inline"><math aria-label="四分之一"><mfrac><mn>1</mn><mn>4</mn></mfrac></math></span> 倍率；實作前必須以實際 actuator 座標重建 Jacobian。</p></article>
+              <article class="audit-item"><h3>Eq. 8 與 Eq. 9 的旋轉係數沒有完全對上</h3><p>Eq. 6 已出現 <span class="math-inline"><math aria-label="四 c 乘 l m 平方"><mn>4</mn><mi>c</mi><msubsup><mi>l</mi><mi>m</mi><mn>2</mn></msubsup></math></span> 的旋轉阻尼，而 Eq. 8 印出的旋轉阻尼／剛性似乎少了 <code>4</code>；Eq. 9 的 <span class="math-inline"><math aria-label="十二 c 除以 m"><mfrac><mrow><mn>12</mn><mi>c</mi></mrow><mi>m</mi></mfrac></math></span>、<span class="math-inline"><math aria-label="十二 k 除以 m"><mfrac><mrow><mn>12</mn><mi>k</mi></mrow><mi>m</mi></mfrac></math></span> 反而與「保留 4」且代入 <span class="math-inline"><math aria-label="J 等於 m l m 平方除以三"><mi>J</mi><mo>=</mo><mfrac><mrow><mi>m</mi><msubsup><mi>l</mi><mi>m</mi><mn>2</mn></msubsup></mrow><mn>3</mn></mfrac></math></span> 相容。</p></article>
+              <article class="audit-item"><h3>Eq. 14 的總擾動符號需重新定義</h3><p>由 <span class="math-inline"><math aria-label="Z 二階微分加四 c 除以 m 乘 Z 一階微分加四 k 除以 m 乘 Z"><mover accent="true"><mi>Z</mi><mo>¨</mo></mover><mo>+</mo><mfrac><mrow><mn>4</mn><mi>c</mi></mrow><mi>m</mi></mfrac><mover accent="true"><mi>Z</mi><mo>˙</mo></mover><mo>+</mo><mfrac><mrow><mn>4</mn><mi>k</mi></mrow><mi>m</mi></mfrac><mi>Z</mi><mo>=</mo><mo>⋯</mo></math></span> 移項後，內部動態應帶負號。原文文字把正的 <span class="math-inline"><math aria-label="四 c 除以 m 乘 y 一階微分加四 k 除以 m 乘 y"><mfrac><mrow><mn>4</mn><mi>c</mi></mrow><mi>m</mi></mfrac><mover accent="true"><mi>y</mi><mo>˙</mo></mover><mo>+</mo><mfrac><mrow><mn>4</mn><mi>k</mi></mrow><mi>m</mi></mfrac><mi>y</mi></math></span> 稱為 <code>f</code>，與運動方程移項不一致。ADRC 可以重新吸收到 <code>f</code>，但定義與實作符號必須一致。</p></article>
+              <article class="audit-item"><h3>Eq. 16 缺少觀測誤差注入</h3><p>印刷式使用 <span class="math-inline"><math aria-label="L 乘 f 的一階微分"><mi>L</mi><mover accent="true"><mi>f</mi><mo>˙</mo></mover></math></span>，但 <span class="math-inline"><math aria-label="f 的一階微分"><mover accent="true"><mi>f</mi><mo>˙</mo></mover></math></span> 正是未知量；標準 LESO 應由 <span class="math-inline"><math aria-label="y 減 z1"><mi>y</mi><mo>−</mo><msub><mi>z</mi><mn>1</mn></msub></math></span> 修正三個估測狀態。Fig. 6 也畫出量測回授進入 LESO，因此較像公式排版錯誤。</p></article>
+              <article class="audit-item"><h3>三軸量測反解沒有寫清楚</h3><p>兩個 2D PSD 理論上可提供足夠觀測，但論文沒有列出 spot displacement 到 <code>Z/φ/θ</code> 的完整量測矩陣、標定程序、解析度傳遞與軸間誤差。</p></article>
+              <article class="audit-item"><h3>性能圖缺少可重現的控制參數</h3><p>論文給了 <span class="math-inline"><math aria-label="omega o 約等於三到五倍 omega c"><msub><mi>ω</mi><mi>o</mi></msub><mo>≈</mo><mrow><mo>(</mo><mn>3</mn><mo>∼</mo><mn>5</mn><mo>)</mo></mrow><msub><mi>ω</mi><mi>c</mi></msub></math></span> 的一般原則，卻沒有清楚列出實驗使用的每軸 <code>ωc</code>、<code>ωo</code>、<code>b0</code>、取樣時間、離散化方法、電壓／slew 限制與保護邏輯。</p></article>
+              <article class="audit-item"><h3>「抗擾」證據仍偏定性</h3><p>只有受電壓放大器限制的 10 V 注入測試，沒有 disturbance frequency sweep、對照控制器、RMS／peak error 或噪聲頻譜。足以說「有效果」，不足以說「在全頻段都強韌」。</p></article>
+            </div>
+          </section>
+
+          <section id="takeaway">
+            <div class="section-head"><span class="section-no">07</span><div><h2>如果要把這篇變成工程可用設計</h2><p>先保留它的好骨架，再補齊會決定穩定與性能的契約。</p></div></div>
+            <div class="grid-2">
+              <div class="card decision"><h3>值得保留</h3><ul><li>先用 actuator geometry 建立 <code>q ↔ Δd ↔ V</code>。</li><li>共同／差動模式讓三軸物理意義清楚。</li><li>幾何解耦與動態擾動補償分層。</li><li>用頻寬參數化 LADRC，調整入口少。</li></ul></div>
+              <div class="card caution"><h3>必須補齊</h3><ul><li>重新推導且數值驗證 Jacobian／allocation matrix。</li><li>建立 PSD measurement matrix 與 calibration。</li><li>列出 <code>Ts</code>、延遲、濾波、飽和、slew、anti-windup。</li><li>量測每軸 FRF、cross-FRF 與 noise floor。</li></ul></div>
+            </div>
+            <h3>最小可驗證順序</h3>
+            <div class="reading-path">
+              <div><b>Step 1｜靜態幾何</b>逐片施加小電壓，量 <code>Z/φ/θ</code>，直接辨識 3×4 Jacobian。</div>
+              <div><b>Step 2｜配置矩陣</b>用 pseudo-inverse 產生三個模式，確認 null-space 不造成危險內力。</div>
+              <div><b>Step 3｜單軸 FRF</b>在低增益下量三軸 FRF 與 cross-FRF，找出可用頻帶與結構模態。</div>
+              <div><b>Step 4｜LADRC</b>先低 <code>ωc/ωo</code>，再以噪聲、飽和與耦合殘差逐步提高。</div>
+            </div>
+            <div class="callout"><strong>目前工程判斷：</strong>這篇最適合當「架構起點」，不適合直接照公式抄進韌體。先把幾何矩陣、量測矩陣與時序契約實測化，再決定 LADRC 能吃掉多少殘餘耦合。</div>
+          </section>
+
+          <section id="references">
+            <div class="section-head"><span class="section-no">08</span><div><h2>從原文 30 篇參考文獻中，精選 10 篇</h2><p>排序依「幫你理解與重建本篇」的重要性，不代表全領域最新排名。</p></div></div>
+            <div class="ref-controls" role="group" aria-label="參考文獻分類">
+              <button type="button" class="active" data-ref-filter="all">全部 10 篇</button>
+              <button type="button" data-ref-filter="model">模型／結構</button>
+              <button type="button" data-ref-filter="control">ADRC／控制</button>
+              <button type="button" data-ref-filter="benchmark">對照架構</button>
+            </div>
+            <div class="refs">
+              <article class="ref" data-ref-cat="model"><div><h3>[22] Dynamic modeling and validation of a novel 3-DOF flexible thin sheet nano-manipulator</h3><p>Chen &amp; Yan, <i>Smart Materials and Structures</i>, 2020.</p><p class="why"><b>為何必讀：</b>同一平台的直接前作；本篇的 <code>m</code>、結構模型與 50 Hz 模擬結果都回指這篇。先讀它，才能知道哪些模型結果不是本篇新驗證。</p></div><span class="tag paper priority">優先度 A+</span><a class="button" href="https://doi.org/10.1088/1361-665X/ab7859">DOI</a></article>
+              <article class="ref" data-ref-cat="model"><div><h3>[28] A generalized approach on bending and stress analysis of beams with piezoelectric material bonded</h3><p>Chen, Yan &amp; Ouyang, <i>Sensors and Actuators A</i>, 2019.</p><p class="why"><b>為何必讀：</b>本篇 Appendix A/B 的薄片彎曲、端點變形與 <code>K_V</code> 等效電機轉換係數來源。</p></div><span class="tag paper priority">優先度 A+</span><a class="button" href="https://doi.org/10.1016/j.sna.2019.02.029">DOI</a></article>
+              <article class="ref" data-ref-cat="control"><div><h3>[30] On validation of extended state observer through analysis and experimentation</h3><p>Zheng, Gao &amp; Gao, <i>ASME Journal of Dynamic Systems, Measurement, and Control</i>, 2012.</p><p class="why"><b>為何必讀：</b>本篇 LESO 增益 <span class="math-inline"><math aria-label="三 omega o、三 omega o 平方、omega o 三次方"><mo>[</mo><mn>3</mn><msub><mi>ω</mi><mi>o</mi></msub><mo>,</mo><mn>3</mn><msubsup><mi>ω</mi><mi>o</mi><mn>2</mn></msubsup><mo>,</mo><msubsup><mi>ω</mi><mi>o</mi><mn>3</mn></msubsup><mo>]</mo></math></span> 的直接依據，也能幫你判斷 Eq. 16 的觀測器寫法是否合理。</p></div><span class="tag paper priority">優先度 A+</span><a class="button" href="https://doi.org/10.1115/1.4005364">DOI</a></article>
+              <article class="ref" data-ref-cat="control"><div><h3>[24] Hierarchical anti-disturbance control of a piezoelectric stage via combined disturbance observer and error-based ADRC</h3><p>Yang, Wang &amp; Youcef-Toumi, <i>IEEE Transactions on Industrial Electronics</i>, 2021.</p><p class="why"><b>為何必讀：</b>同樣是 piezo stage，卻把不同頻帶／來源的擾動分層處理；適合拿來挑戰「全部塞進 total disturbance」是否足夠。</p></div><span class="tag paper priority">優先度 A</span><a class="button" href="https://doi.org/10.1109/TIE.2021.3080221">DOI</a></article>
+              <article class="ref" data-ref-cat="control"><div><h3>[25] Development and testing of a large-stroke nanopositioning stage with linear ADRC</h3><p>Tang et al., <i>IEEE Transactions on Automation Science and Engineering</i>, 2022.</p><p class="why"><b>為何必讀：</b>把 LADRC 放進更完整的奈米定位平台測試，可比較調參、追蹤與實驗驗證深度。</p></div><span class="tag paper priority">優先度 A</span><a class="button" href="https://doi.org/10.1109/TASE.2021.3085481">DOI</a></article>
+              <article class="ref" data-ref-cat="control"><div><h3>[21] High-bandwidth control of a piezoelectric nanopositioning stage in the presence of plant uncertainties</h3><p>Aphale, Devasia &amp; Moheimani, <i>Nanotechnology</i>, 2008.</p><p class="why"><b>為何必讀：</b>直接面對 piezo plant uncertainty 與高頻寬控制，是檢查 LADRC 頻寬、未建模共振與 robust stability 的重要對照。</p></div><span class="tag paper priority">優先度 A</span><a class="button" href="https://doi.org/10.1088/0957-4484/19/12/125503">DOI</a></article>
+              <article class="ref" data-ref-cat="model"><div><h3>[29] Modeling and experiments of equivalent viscous damping for piezoelectric unimorph cantilevers</h3><p>Fang &amp; Zhang, <i>Optics and Precision Engineering</i>, 2014.</p><p class="why"><b>為何必讀：</b>本篇等效阻尼 <code>c</code> 的來源。若要做可重現模型，阻尼不能只當 fitting 常數。</p></div><span class="tag paper priority">優先度 B+</span><a class="button" href="https://doi.org/10.3788/OPE.20142203.0641">DOI</a></article>
+              <article class="ref" data-ref-cat="benchmark"><div><h3>[17] An ultra-thin monolithic XY nanopositioning stage constructed from a single sheet of piezoelectric material</h3><p>Fleming &amp; Yong, <i>IEEE/ASME Transactions on Mechatronics</i>, 2017.</p><p class="why"><b>為何必讀：</b>薄片式 PZT 平台的代表性架構；用來比較「單片單體結構」與本篇「四片彎曲致動器＋中央鏡面」。</p></div><span class="tag paper priority">優先度 B+</span><a class="button" href="https://doi.org/10.1109/TMECH.2017.2755659">DOI</a></article>
+              <article class="ref" data-ref-cat="benchmark"><div><h3>[18] A five-axis monolithic nanopositioning stage constructed from a bimorph piezoelectric sheet</h3><p>Omidbeike et al., IEEE MARSS, 2019.</p><p class="why"><b>為何必讀：</b>把薄片 PZT 擴展到五軸，可看出增加 DOF 後幾何配置、結構模態與量測會怎麼快速變複雜。</p></div><span class="tag paper priority">優先度 B</span><span class="tag limit">會議論文</span></article>
+              <article class="ref" data-ref-cat="benchmark"><div><h3>[19] H∞ robust control of a large-piston MEMS micromirror</h3><p>Chen et al., <i>Sensors</i>, 2018.</p><p class="why"><b>為何必讀：</b>同樣關心鏡面傾斜、平移與外擾，但採 H∞ robust control；是檢查 ADRC 解耦優缺點的替代路線。</p></div><span class="tag paper priority">優先度 B</span><a class="button" href="https://doi.org/10.3390/s18020508">DOI</a></article>
+            </div>
+            <div class="callout"><strong>建議閱讀順序：</strong>先 <code>[22] → [28] → [30]</code> 建立本篇模型與 ESO 根基；再讀 <code>[24] / [25] / [21]</code> 比較控制策略；最後用 <code>[17] / [18] / [19]</code> 拉開結構與控制架構視野。<code>[29]</code> 在你要重建參數時再回來細讀。</div>
+          </section>
+
+          <section id="glossary">
+            <div class="section-head"><span class="section-no">09</span><div><h2>名詞速查</h2><p>回頭看原文時，不要讓縮寫打斷理解。</p></div></div>
+            <dl class="glossary">
+              <div><dt>PZT thin-sheet actuator</dt><dd>壓電薄片彎曲致動器；電壓使壓電層應變，與銅基板的不對稱結構讓整片彎曲。</dd></div>
+              <div><dt>3-DOF</dt><dd>三自由度。本篇是垂直平移 <code>Z</code> 加上兩個小角度旋轉 <code>φ/θ</code>。</dd></div>
+              <div><dt>MIMO</dt><dd>多輸入多輸出；本篇有四個致動電壓與三個姿態輸出。</dd></div>
+              <div><dt>Control allocation</dt><dd>控制配置。把三個虛擬命令分配成四個 actuator 電壓。</dd></div>
+              <div><dt>ADRC / LADRC</dt><dd>主動擾動抑制控制／線性 ADRC。核心是 ESO 估測 total disturbance，再即時補償。</dd></div>
+              <div><dt>ESO / LESO</dt><dd>擴張狀態觀測器／線性 ESO。除了位置、速度，再多估一個總擾動狀態。</dd></div>
+              <div><dt><code>ωc</code></dt><dd>控制器頻寬；希望閉迴路追多快。</dd></div>
+              <div><dt><code>ωo</code></dt><dd>觀測器頻寬；希望 ESO 多快追上狀態與擾動。</dd></div>
+              <div><dt><code>b0</code></dt><dd>名義輸入增益；命令 <code>u</code> 對輸出加速度的預估比例。</dd></div>
+              <div><dt>PSD</dt><dd>位置敏感偵測器（position-sensitive detector），用雷射光點位置重建鏡面運動。</dd></div>
+              <div><dt>Hysteresis / creep</dt><dd>磁滯／蠕變；PZT 的輸入輸出非線性與時間緩慢漂移。</dd></div>
+              <div><dt>Null space</dt><dd>零空間；某些 actuator 組合不產生想要的三個剛體輸出，卻可能造成內力或柔性變形。</dd></div>
+            </dl>
+          </section>
+        </div>
+
+        <footer class="footer">
+          <p><b>來源：</b>Ning Chen and Xianfu Liu, “Dynamic Modeling and Attitude Decoupling Control for a 3-DOF Flexible Piezoelectric Nano-Positioning Stage Based on ADRC,” <i>Micromachines</i>, 2022, 13, 1591. <a href="https://doi.org/10.3390/mi13101591">DOI: 10.3390/mi13101591</a>.</p>
+          <p><b>閱讀聲明：</b>數值與作者主張均回到原始 PDF；紫色 <code>inference</code> 是工程解讀，紅色 <code>audit</code> 是公式／證據一致性提醒。此文件不是對原作者的勘誤定論，而是實作前的回查清單。</p>
+        </footer>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const body = document.body;
+      if (!("MathMLElement" in window)) body.classList.add("no-mathml");
+      const depthButtons = [...document.querySelectorAll('[data-depth-button]')];
+      depthButtons.forEach(button => button.addEventListener('click', () => {
+        body.dataset.depth = button.dataset.depthButton;
+        depthButtons.forEach(item => item.classList.toggle('active', item === button));
+      }));
+
+      const themeButton = document.getElementById('themeButton');
+      themeButton.addEventListener('click', () => {
+        body.dataset.theme = body.dataset.theme === 'dark' ? 'light' : 'dark';
+        themeButton.textContent = body.dataset.theme === 'dark' ? '切換淺色' : '切換深色';
+      });
+
+      const stageModes = {
+        z: { title: '<code>Z</code>：四片一起彎', text: '四片致動器得到相同極性的電壓，平台中心鏡面主要做垂直平移。理想對稱下，旋轉項彼此抵消。', output: 'Z', pattern: '[+ + + +]', signs: [1,1,1,1] },
+        phi: { title: '<code>φ</code>：左右兩組反向彎', text: '<code>V1/V4</code> 與 <code>V2/V3</code> 方向相反，平台一側升、另一側降，形成繞其中一個平面軸的旋轉。', output: 'φ', pattern: '[+ − − +]', signs: [1,-1,-1,1] },
+        theta: { title: '<code>θ</code>：前後兩組反向彎', text: '<code>V1/V2</code> 與 <code>V3/V4</code> 方向相反，平台前後形成高度差，產生另一個旋轉軸。', output: 'θ', pattern: '[+ + − −]', signs: [1,1,-1,-1] }
+      };
+      const stageGraphic = document.getElementById('stageGraphic');
+      const acts = [...stageGraphic.querySelectorAll('.act')];
+      const stageButtons = [...document.querySelectorAll('[data-stage-mode]')];
+      const signRow = document.getElementById('signRow');
+      stageButtons.forEach(button => button.addEventListener('click', () => {
+        const mode = button.dataset.stageMode;
+        const data = stageModes[mode];
+        stageButtons.forEach(item => item.classList.toggle('active', item === button));
+        stageGraphic.className = `stage mode-${mode}`;
+        acts.forEach((act, index) => {
+          const positive = data.signs[index] > 0;
+          act.classList.toggle('positive', positive);
+          act.classList.toggle('negative', !positive);
+          act.textContent = `V${index + 1} ${positive ? '+' : '−'}`;
+        });
+        signRow.innerHTML = data.signs.map((sign, index) => `<div class="sign ${sign > 0 ? 'pos' : 'neg'}">V${index + 1} ${sign > 0 ? '+' : '−'}</div>`).join('');
+        document.getElementById('stageTitle').innerHTML = data.title;
+        document.getElementById('stageText').innerHTML = data.text;
+        document.getElementById('axisOutput').textContent = data.output;
+        document.getElementById('axisPattern').textContent = data.pattern;
+      }));
+
+      const disturbanceText = {
+        coupling: '例如只命令 <code>Z</code>，四片 PZT 的增益卻不完全一樣，於是 <code>φ/θ</code> 也開始動。每個旋轉軸的 ESO 會把這個「未由自身命令造成的加速度」估成總擾動，再由 <span class="math-inline"><math aria-label="負 z3 除以 b0"><mfrac><mrow><mo>−</mo><msub><mi>z</mi><mn>3</mn></msub></mrow><msub><mi>b</mi><mn>0</mn></msub></mfrac></math></span> 補回。',
+        hysteresis: '同一個電壓在上升與下降時產生不同位移，或命令停止後仍慢慢爬行。LADRC 不需先精確辨識完整磁滯模型，而是從輸出偏差持續更新 <code>z3</code>；但過快的非線性或飽和仍可能超過觀測器能力。',
+        mismatch: '四片 PZT 的黏著層、剛性與電壓增益不一致，固定配置矩陣就不再完美。這些誤差會在各軸輸出形成殘差，ESO 可部分補償；更好的第一步仍是重新辨識 3×4 Jacobian。',
+        external: '外力或電壓干擾讓平台加速度偏離預期。只要擾動落在可觀測頻帶內且 actuator 尚未飽和，<code>z3</code> 會追上它並產生反向補償；論文只展示有限的 10 V 注入案例。'
+      };
+      document.querySelectorAll('[data-disturbance]').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('[data-disturbance]').forEach(item => item.classList.toggle('active', item === button));
+        document.getElementById('disturbanceText').innerHTML = disturbanceText[button.dataset.disturbance];
+      }));
+
+      const refButtons = [...document.querySelectorAll('[data-ref-filter]')];
+      const refs = [...document.querySelectorAll('.ref')];
+      refButtons.forEach(button => button.addEventListener('click', () => {
+        const filter = button.dataset.refFilter;
+        refButtons.forEach(item => item.classList.toggle('active', item === button));
+        refs.forEach(ref => { ref.hidden = filter !== 'all' && ref.dataset.refCat !== filter; });
+      }));
+
+      const tocLinks = [...document.querySelectorAll('.toc a')];
+      const sections = tocLinks.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+      const updatePosition = () => {
+        const max = document.documentElement.scrollHeight - innerHeight;
+        document.getElementById('progressBar').style.width = `${max > 0 ? (scrollY / max) * 100 : 0}%`;
+        let current = sections[0];
+        for (const section of sections) if (section.getBoundingClientRect().top < 150) current = section;
+        tocLinks.forEach(link => link.classList.toggle('active', current && link.getAttribute('href') === `#${current.id}`));
+      };
+      addEventListener('scroll', updatePosition, { passive: true });
+      addEventListener('resize', updatePosition);
+      updatePosition();
+    })();
+  </script>
+</body>
+</html>
