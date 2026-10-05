@@ -11620,7 +11620,7 @@ kappa = (1 - a) * K
 <h3 tabindex="-1" id="voltage-input-calibration-overview">關卡總覽與目前進度</h3>
 <div class="section-body"><p>進度更新：<code>2026-10-05</code>。第一、二關已確認並回寫；第三關待討論。</p>
 <ul>
-<li><strong>目前位置：</strong>採用比例＋偏移＋零點銜接，保留純後向歐拉 RL 模型；兩點換算工具已納入第二關。</li>
+<li><strong>目前位置：</strong>電壓映射採零附近過原點直線＋外側比例與偏移，保留純後向歐拉 RL 模型；換算工具可由內側斜率自動求轉折幅度 <code>Ub</code>。</li>
 <li><strong>下一步：</strong><a href="#voltage-input-calibration-gate-3">第三關｜韌體實作與驗證分析</a>，確認作用區間、參數設定與實機驗證結果。</li>
 </ul>
 <div class="table-wrap" tabindex="0" role="region" aria-label="可水平捲動的表格"><table>
@@ -11691,7 +11691,9 @@ kappa = (1 - a) * K
 </tr>
 </tbody></table></div>
 <p>B 與 D 不必是相同的電流工作點。</p>
-<p>零點吻合，也不代表零附近的一整段範圍都完全吻合。小電壓時，絕對誤差可能很小；電壓幅度增加後，差異才容易看見。因此，目前尚未確認存在「超過某個閾值才開始失準」的現象。</p>
+<p>零點吻合，也不代表零附近的一整段範圍都完全吻合。小電壓時，絕對誤差可能很小；電壓幅度增加後，差異才容易看見。</p>
+<p>最新實測回報：負向的「基準電壓 → 校正電壓」近似兩條直線，轉折可能在 deadtime 換算幅度附近。使用者回憶的內側係數為斜率 <code>0.53</code>、偏移 <code>+0.034 V</code>；外側為斜率 <code>0.90</code>、偏移 <code>+1.389 V</code>。兩段斜率約相差 <code>1.70</code> 倍，不再只用一條直線涵蓋整個範圍。</p>
+<p>這些係數尚待原始資料複核；轉折靠近 deadtime 是觀察線索，不直接當作確定成因。</p>
 <h4 id="h-122">倍率會改變波形的偏差方向</h4>
 <p>在原本未校正的 RL 模型中，提高 <code>SLVBUS</code>（自研對應 <code>V_model</code>），會讓相同負電壓命令下的估測電流更負。因此，原本「小負電流太負、大負電流不夠負」，可能變成「兩者都太負」。</p>
 <p><strong>「太負／不夠負」描述的是某組參數下的結果。真正需要辨別的是：各工作點需要什麼樣的共同修正。</strong></p>
@@ -11721,14 +11723,14 @@ kappa = (1 - a) * K
 </tbody></table></div>
 <p>情境②還需要檢查如何銜接零點。非零工作區需要的固定偏移，若直接延伸到零命令，可能破壞原本正確的零電流。</p>
 <h4 id="h-124">目前判斷與下一關</h4>
-<p>依目前實測，單純調整 <code>R</code> 或 <code>SLVBUS</code> 不足以同時對齊各點，因此優先評估情境②與③。目前以電壓重建誤差作為工作假設，成因尚未確認。</p>
-<p>第二關採用比例＋偏移處理指定非零範圍，並以連續公式銜接零點。第三關驗證未參與求解的工作點與暫態，辨別此方法是否足夠。</p><p class="gate-return"><a href="#voltage-input-calibration-overview">返回關卡總覽</a></p></div></section>
+<p>依目前實測，單純調整 <code>R</code> 或 <code>SLVBUS</code> 不足以同時對齊各點。各段可先用情境②的直線描述；全範圍的斜率不同，屬於情境③的分段關係。目前以電壓重建誤差作為工作假設。</p>
+<p>第二關以內側過原點直線與外側比例＋偏移連續銜接；第三關驗證未參與求解的工作點與 P2P 暫態，確認兩段是否足夠。</p><p class="gate-return"><a href="#voltage-input-calibration-overview">返回關卡總覽</a></p></div></section>
 <section class="subsection" aria-labelledby="voltage-input-calibration-gate-2" hidden>
 <h3 tabindex="-1" id="voltage-input-calibration-gate-2">第二關｜理解修正原理與選擇方法</h3>
-<div class="section-body"><p><strong>理解狀態：已收斂；公式與換算工具已確認，尚未實機驗證。</strong></p>
+<div class="section-body"><p><strong>理解狀態：已收斂；兩段連續校準公式與工具已確認，候選參數尚待實機驗證。</strong></p>
 <h4 id="h-126">本關結論與訊號定義</h4>
-<p>保留純後向歐拉 RL 模型，在電壓輸入端加入<strong>比例＋偏移＋零點銜接</strong>。量測電流只用於校準與驗證，不加入執行期電流誤差修正、LPF 或擾動積分器。</p>
-<p>本關假設馬達停穩、反電動勢可忽略，且零電壓對應零電流。數值範例為假設資料，用來確認換算邏輯。</p>
+<p>保留純後向歐拉 RL 模型，在電壓輸入端使用<strong>零附近過原點直線＋外側比例與偏移</strong>。量測電流只用於校準與驗證，不加入執行期電流誤差修正、LPF 或擾動積分器。</p>
+<p>本關假設馬達停穩、反電動勢可忽略，且零電壓對應零電流。兩點求解範例為假設資料；後面的 <code>0.53／0.90</code> 範例根據使用者回憶的負向係數建立，正向鏡射為測試假設。</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="可水平捲動的表格"><table>
 <thead><tr>
 <th>符號／韌體名稱</th>
@@ -11753,7 +11755,12 @@ kappa = (1 - a) * K
 </tr>
 <tr>
 <td><code>Kv</code></td>
-<td>非零工作區的校正斜率</td>
+<td>外側工作區的校正斜率</td>
+<td>無單位</td>
+</tr>
+<tr>
+<td><code>K_in</code></td>
+<td>零附近、過原點的內側斜率</td>
 <td>無單位</td>
 </tr>
 <tr>
@@ -11763,7 +11770,7 @@ kappa = (1 - a) * K
 </tr>
 <tr>
 <td><code>Ub_V</code></td>
-<td>偏移完全加入時的電壓幅度，必須為正</td>
+<td>內、外側交點的電壓幅度，必須為正</td>
 <td>V</td>
 </tr>
 <tr>
@@ -11792,7 +11799,7 @@ V_{\mathrm{bias}}&amp;=(1-K_v)V_c
 $$</div>
 <p>它就是 <code>y = ax + b</code>；<code>Vc</code> 是校正前後電壓相同的交點。韌體保存 <code>Kv</code> 與 <code>Vbias</code> 即可；<code>Kv</code> 接近 <code>1</code> 時，不使用中心形式，避免除以接近零的數值。</p>
 <h4 id="h-128">記錄兩個穩態工作點，求出係數</h4>
-<p>每個工作點記錄停穩後的<strong>基準電壓 <code>u</code> 與同時段量測電流 <code>iq</code> 的平均值</strong>。正、負向分別求解，求解期間固定 <code>R</code>、<code>L</code>、<code>V_ref</code>，並令 <code>V_model = V_ref</code>。</p>
+<p>每個工作點記錄停穩後的<strong>基準電壓 <code>u</code> 與同時段量測電流 <code>iq</code> 的平均值</strong>。兩個求解點應位於同方向的外側直線區；正、負向分別求解。求解期間固定 <code>R</code>、<code>L</code>、<code>V_ref</code>，並令 <code>V_model = V_ref</code>。</p>
 <p><code>u</code> 就是以下程式算出的電壓，不是修正後的 <code>u_hat</code>，也不是直接量測的線圈端電壓：</p>
 <pre tabindex="0" role="region" aria-label="可水平捲動的程式碼"><code class="language-c">
 // CMP 為實際作用、加上 2500 後的兩路整數絕對比較值。
@@ -11849,7 +11856,7 @@ V_c&amp;=\frac{V_{\mathrm{bias}}}{1-K_v}=-2.6875\ \mathrm{V}
 $$</div>
 <p>代回後，<code>−2.2 V</code> 變為 <code>−1.6 V</code>，小負電流往上修正；<code>−3.5 V</code> 變為 <code>−4.5 V</code>，大負電流往下修正。同一條直線可以同時處理兩點，不必逐點換 offset。</p>
 <h4 id="h-130">Kv／Vbias 換算工具</h4>
-<p>填入固定 <code>R</code>、兩點基準電壓 <code>u</code> 與穩態量測 <code>iq</code>，工具會計算 <code>Kv</code>、<code>Vbias</code> 與 <code>Vc</code>。選填 <code>Ub</code> 及第三個工作點，可檢查零附近斜率與未參與求解的預測誤差。</p>
+<p>填入固定 <code>R</code>、外側兩點的基準電壓 <code>u</code> 與穩態量測 <code>iq</code>，工具會計算 <code>Kv</code>、<code>Vbias</code> 與 <code>Vc</code>。再填內側斜率 <code>K_in</code>，即可自動求出 <code>Ub</code> 與 <code>1 / Ub</code>；留白時沿用手動 <code>Ub</code>。選填第三個工作點，可檢查未參與求解的預測誤差。</p>
 <div class="gate-interactive affine-calculator" aria-label="換算工具：Kv／Vbias 兩點校準">
 <iframe id="acs-affine-calculator-visualization" sandbox="allow-scripts" referrerpolicy="no-referrer" title="自研 SB+｜Kv／Vbias 換算" data-srcdoc="&lt;!doctype html&gt;
 &lt;html lang=&quot;zh-Hant&quot; data-visualize-standalone&gt;
@@ -13401,22 +13408,23 @@ html&gt;body{padding:0}&lt;/style&gt;
     &lt;h2&gt;Kv／Vbias 換算&lt;/h2&gt;
     &lt;span class=&quot;text-small text-muted&quot; data-source&gt;假設範例&lt;/span&gt;
   &lt;/div&gt;
+  &lt;p class=&quot;text-small text-muted&quot;&gt;兩個校準點需位於同方向的外側直線區；固定 R，並令 V_model = V_ref。&lt;/p&gt;
 
   &lt;div class=&quot;calc-layout&quot;&gt;
     &lt;section aria-label=&quot;校準資料&quot;&gt;
       &lt;div class=&quot;calc-group viz-controls&quot;&gt;
         &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-r&quot;&gt;模型電阻 R（Ω）
-          &lt;input id=&quot;sbp-affine-r&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;r&quot; type=&quot;number&quot; min=&quot;0&quot; step=&quot;any&quot; value=&quot;10&quot;&gt;
+          &lt;input id=&quot;sbp-affine-r&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;r&quot; type=&quot;text&quot; inputmode=&quot;decimal&quot; value=&quot;10&quot;&gt;
         &lt;/label&gt;
       &lt;/div&gt;
       &lt;div class=&quot;calc-group&quot;&gt;
         &lt;h3&gt;校準工作點 1&lt;/h3&gt;
         &lt;div class=&quot;viz-controls&quot;&gt;
           &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-u1&quot;&gt;基準電壓 u₁（V）
-            &lt;input id=&quot;sbp-affine-u1&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;u1&quot; type=&quot;number&quot; step=&quot;any&quot; value=&quot;-2.2&quot;&gt;
+            &lt;input id=&quot;sbp-affine-u1&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;u1&quot; type=&quot;text&quot; inputmode=&quot;decimal&quot; value=&quot;-2.2&quot;&gt;
           &lt;/label&gt;
           &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-i1&quot;&gt;穩態量測 iq（A）
-            &lt;input id=&quot;sbp-affine-i1&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;i1&quot; type=&quot;number&quot; step=&quot;any&quot; value=&quot;-0.16&quot;&gt;
+            &lt;input id=&quot;sbp-affine-i1&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;i1&quot; type=&quot;text&quot; inputmode=&quot;decimal&quot; value=&quot;-0.16&quot;&gt;
           &lt;/label&gt;
         &lt;/div&gt;
       &lt;/div&gt;
@@ -13424,10 +13432,10 @@ html&gt;body{padding:0}&lt;/style&gt;
         &lt;h3&gt;校準工作點 2&lt;/h3&gt;
         &lt;div class=&quot;viz-controls&quot;&gt;
           &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-u2&quot;&gt;基準電壓 u₂（V）
-            &lt;input id=&quot;sbp-affine-u2&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;u2&quot; type=&quot;number&quot; step=&quot;any&quot; value=&quot;-3.5&quot;&gt;
+            &lt;input id=&quot;sbp-affine-u2&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;u2&quot; type=&quot;text&quot; inputmode=&quot;decimal&quot; value=&quot;-3.5&quot;&gt;
           &lt;/label&gt;
           &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-i2&quot;&gt;穩態量測 iq（A）
-            &lt;input id=&quot;sbp-affine-i2&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;i2&quot; type=&quot;number&quot; step=&quot;any&quot; value=&quot;-0.45&quot;&gt;
+            &lt;input id=&quot;sbp-affine-i2&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;i2&quot; type=&quot;text&quot; inputmode=&quot;decimal&quot; value=&quot;-0.45&quot;&gt;
           &lt;/label&gt;
         &lt;/div&gt;
       &lt;/div&gt;
@@ -13449,12 +13457,22 @@ html&gt;body{padding:0}&lt;/style&gt;
   &lt;/div&gt;
 
   &lt;details class=&quot;calc-checks&quot; data-checks&gt;
-    &lt;summary class=&quot;cursor-interaction&quot;&gt;第三點與零點銜接檢查（選填）&lt;/summary&gt;
+    &lt;summary class=&quot;cursor-interaction&quot;&gt;轉折點與第三點驗證（選填）&lt;/summary&gt;
+    &lt;p class=&quot;text-small text-muted&quot;&gt;填入通過原點擬合的內側斜率，自動計算 Ub；留空則使用手動 Ub。&lt;/p&gt;
     &lt;div class=&quot;viz-controls&quot;&gt;
-      &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-ub&quot;&gt;銜接幅度 Ub（V，正值）
-        &lt;input id=&quot;sbp-affine-ub&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;ub&quot; type=&quot;number&quot; min=&quot;0&quot; step=&quot;any&quot; value=&quot;2.2&quot;&gt;
+      &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-kin&quot;&gt;內側斜率 K_in（無單位，選填）
+        &lt;input id=&quot;sbp-affine-kin&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;kin&quot; type=&quot;text&quot; inputmode=&quot;decimal&quot;&gt;
+      &lt;/label&gt;
+      &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-ub&quot;&gt;手動 Ub（V，正值；未填內側斜率時使用）
+        &lt;input id=&quot;sbp-affine-ub&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;ub&quot; type=&quot;text&quot; inputmode=&quot;decimal&quot; value=&quot;2.2&quot;&gt;
       &lt;/label&gt;
     &lt;/div&gt;
+    &lt;table class=&quot;table table-sm&quot; aria-label=&quot;目前使用的轉折點&quot;&gt;
+      &lt;tbody&gt;
+        &lt;tr&gt;&lt;th scope=&quot;row&quot;&gt;Ub（目前使用，V）&lt;/th&gt;&lt;td&gt;&lt;output class=&quot;tabular-nums&quot; data-output=&quot;ub&quot;&gt;—&lt;/output&gt;&lt;/td&gt;&lt;/tr&gt;
+        &lt;tr&gt;&lt;th scope=&quot;row&quot;&gt;1／Ub（V⁻¹）&lt;/th&gt;&lt;td&gt;&lt;output class=&quot;tabular-nums&quot; data-output=&quot;inv_ub&quot;&gt;—&lt;/output&gt;&lt;/td&gt;&lt;/tr&gt;
+      &lt;/tbody&gt;
+    &lt;/table&gt;
     &lt;div class=&quot;viz-row&quot; aria-live=&quot;polite&quot;&gt;
       &lt;span&gt;零附近斜率：&lt;output class=&quot;tabular-nums&quot; data-output=&quot;slope&quot;&gt;—&lt;/output&gt;&lt;/span&gt;
       &lt;span class=&quot;text-small calc-status&quot; data-slope-status&gt;&lt;/span&gt;
@@ -13462,10 +13480,10 @@ html&gt;body{padding:0}&lt;/style&gt;
     &lt;hr&gt;
     &lt;div class=&quot;viz-controls&quot;&gt;
       &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-u3&quot;&gt;驗證工作點電壓 u₃（V）
-        &lt;input id=&quot;sbp-affine-u3&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;u3&quot; type=&quot;number&quot; step=&quot;any&quot;&gt;
+        &lt;input id=&quot;sbp-affine-u3&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;u3&quot; type=&quot;text&quot; inputmode=&quot;decimal&quot;&gt;
       &lt;/label&gt;
       &lt;label class=&quot;form-label&quot; for=&quot;sbp-affine-i3&quot;&gt;驗證點穩態量測 iq（A）
-        &lt;input id=&quot;sbp-affine-i3&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;i3&quot; type=&quot;number&quot; step=&quot;any&quot;&gt;
+        &lt;input id=&quot;sbp-affine-i3&quot; class=&quot;form-control tabular-nums&quot; data-key=&quot;i3&quot; type=&quot;text&quot; inputmode=&quot;decimal&quot;&gt;
       &lt;/label&gt;
     &lt;/div&gt;
     &lt;table class=&quot;table table-sm&quot; aria-label=&quot;未參與求解工作點的驗證結果&quot;&gt;
@@ -13492,11 +13510,24 @@ html&gt;body{padding:0}&lt;/style&gt;
       const checks = root.querySelector(&#x27;[data-checks]&#x27;);
       let dataSource = &#x27;fictional-example&#x27;;
       let computed = null;
+      const editSession = Date.now().toString(36) + &#x27;-&#x27; + Math.random().toString(36).slice(2);
+      let pendingRestore = null;
 
-      const number = key =&gt; fields[key].value.trim() === &#x27;&#x27; ? NaN : Number(fields[key].value);
+      // Keep the editable text (including &#x27;-&#x27; and &#x27;-0.&#x27;) separate from numeric parsing.
+      const number = key =&gt; {
+        const text = fields[key].value.trim();
+        return /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(text) ? Number(text) : NaN;
+      };
       const format = (value, digits = 6) =&gt; Number.isFinite(value)
         ? (Math.abs(value) &lt; 0.5 * Math.pow(10, -digits) ? 0 : value).toFixed(digits)
         : &#x27;—&#x27;;
+      const formatScale = value =&gt; Number.isFinite(value)
+        ? (Math.abs(value) &lt; 1e-6 || Math.abs(value) &gt;= 1e6 ? value.toExponential(6) : format(value))
+        : &#x27;—&#x27;;
+      const formatSigned = (value, digits = 6) =&gt; {
+        const text = format(value, digits);
+        return Number.isFinite(value) &amp;&amp; value &gt; 0 &amp;&amp; Number(text) !== 0 ? &#x27;+&#x27; + text : text;
+      };
       const showMessage = (element, message, isError = false) =&gt; {
         element.textContent = message;
         element.classList.toggle(&#x27;is-error&#x27;, isError);
@@ -13534,23 +13565,63 @@ html&gt;body{padding:0}&lt;/style&gt;
         const center = Math.abs(1 - kv) &gt; 1e-6 * Math.max(1, Math.abs(kv)) ? bias / (1 - kv) : null;
         const direction = Math.sign(u1);
         outputs.kv.textContent = format(kv);
-        outputs.bias.textContent = (bias &gt; 0 ? &#x27;+&#x27; : &#x27;&#x27;) + format(bias);
+        outputs.bias.textContent = formatSigned(bias);
         outputs.center.textContent = center === null ? &#x27;Kv 接近 1，不使用中心形式&#x27; : format(center);
         status.textContent = (direction &gt; 0 ? &#x27;正向&#x27; : &#x27;負向&#x27;) + &#x27;係數 · 兩點求解&#x27;;
-        computed = { kv, bias_V: bias, center_V: center, direction, nearZeroSlope: null, validation: null };
+        computed = { kv, bias_V: bias, center_V: center, direction, nearZeroSlope: null, ub_V: null, inv_Ub: null, ubSource: null, joinValid: false, validation: null };
 
-        const ub = number(&#x27;ub&#x27;);
-        if (Number.isFinite(ub) &amp;&amp; ub &gt; 0) {
-          const slope = kv + direction * bias / ub;
-          outputs.slope.textContent = format(slope);
-          computed.nearZeroSlope = slope;
-          const validSlopes = kv &gt; 0 &amp;&amp; slope &gt; 0;
-          showMessage(slopeStatus, validSlopes ? &#x27;外側與零附近斜率均為正&#x27; : &#x27;斜率未通過：請檢查係數、資料或 Ub&#x27;, !validSlopes);
-          if (ub &gt; Math.min(Math.abs(u1), Math.abs(u2))) {
-            showMessage(slopeStatus, &#x27;Ub 超過較近校準點：銜接後將不再保持兩點原求解結果&#x27;, true);
+        // Derive Ub from the inner/outer intersection without changing either input.
+        // A nonempty unfinished K_in draft must not silently fall back to manual Ub.
+        const autoJoin = fields.kin.value.trim() !== &#x27;&#x27;;
+        let ub = NaN, singleLine = false, joinMessage = &#x27;&#x27;;
+        if (autoJoin) {
+          const inner = number(&#x27;kin&#x27;);
+          const difference = inner - kv;
+          const sameSlope = Math.abs(difference) &lt;= 1e-12 * Math.max(1, Math.abs(inner), Math.abs(kv));
+          const zeroBias = Math.abs(bias) &lt;= 1e-12 * Math.max(1, Math.abs(r * i1), Math.abs(kv * u1));
+          if (!Number.isFinite(inner) || inner &lt;= 0) joinMessage = &#x27;內側斜率必須是大於 0 的有限數值；留空可改用手動 Ub。&#x27;;
+          else if (sameSlope &amp;&amp; zeroBias) singleLine = true;
+          else if (sameSlope) joinMessage = &#x27;內外斜率相同但偏移非零，無法求得有限的兩段交點。&#x27;;
+          else {
+            ub = direction * bias / difference;
+            if (!Number.isFinite(ub) || ub &lt;= 0) joinMessage = &#x27;計算出的 Ub 必須大於 0；請檢查內側斜率與外側偏移是否相容。&#x27;;
           }
-        } else if (fields.ub.value.trim() !== &#x27;&#x27;) {
-          showMessage(slopeStatus, &#x27;Ub 必須是大於 0 的有限數值&#x27;, true);
+        } else {
+          ub = number(&#x27;ub&#x27;);
+          if ((!Number.isFinite(ub) || ub &lt;= 0) &amp;&amp; fields.ub.value.trim() !== &#x27;&#x27;) joinMessage = &#x27;Ub 必須是大於 0 的有限數值。&#x27;;
+        }
+
+        if (singleLine) {
+          computed.nearZeroSlope = kv;
+          computed.ubSource = &#x27;single-line&#x27;;
+          computed.joinValid = kv &gt; 0;
+          outputs.ub.textContent = &#x27;不需要（單一直線）&#x27;;
+          outputs.slope.textContent = format(kv);
+          showMessage(slopeStatus, &#x27;偏移為零且內外斜率相同，使用通過原點的單一直線。&#x27;);
+        } else if (!joinMessage &amp;&amp; Number.isFinite(ub) &amp;&amp; ub &gt; 0) {
+          const inverse = 1 / ub;
+          const slope = kv + direction * bias / ub;
+          if (!Number.isFinite(inverse) || !Number.isFinite(slope)) {
+            showMessage(slopeStatus, &#x27;Ub 倒數或內側斜率超出可計算範圍。&#x27;, true);
+          } else {
+            outputs.ub.textContent = formatScale(ub);
+            outputs.inv_ub.textContent = formatScale(inverse);
+            outputs.slope.textContent = format(slope);
+            computed.nearZeroSlope = slope;
+            computed.ub_V = ub;
+            computed.inv_Ub = inverse;
+            computed.ubSource = autoJoin ? &#x27;inner-slope&#x27; : &#x27;manual&#x27;;
+            computed.joinValid = kv &gt; 0 &amp;&amp; slope &gt; 0;
+            let detail = computed.joinValid ? &#x27;外側與零附近斜率均為正&#x27; : &#x27;斜率未通過：請檢查係數、資料或 Ub&#x27;;
+            let invalid = !computed.joinValid;
+            if (ub &gt; Math.min(Math.abs(u1), Math.abs(u2))) {
+              detail += &#x27;；Ub 超過較近校準點：銜接後將不再保持兩點原求解結果&#x27;;
+              invalid = true;
+            }
+            showMessage(slopeStatus, (autoJoin ? &#x27;自動 Ub · &#x27; : &#x27;手動 Ub · &#x27;) + detail, invalid);
+          }
+        } else if (joinMessage) {
+          showMessage(slopeStatus, joinMessage, true);
         }
 
         const u3 = number(&#x27;u3&#x27;), measured3 = number(&#x27;i3&#x27;);
@@ -13563,8 +13634,12 @@ html&gt;body{padding:0}&lt;/style&gt;
           showMessage(validationStatus, &#x27;驗證點須與校準點同方向；另一方向需另外求係數&#x27;, true);
           return;
         }
+        if (!computed.joinValid) {
+          showMessage(validationStatus, &#x27;請先確認有效的轉折設定與正斜率，再計算驗證結果。&#x27;, true);
+          return;
+        }
         let weight = 1;
-        if (u3 === 0) weight = 0;
+        if (u3 === 0 || singleLine) weight = 0;
         else if (Number.isFinite(ub) &amp;&amp; ub &gt; 0) weight = Math.min(Math.abs(u3) / ub, 1);
         else {
           showMessage(validationStatus, &#x27;請先輸入有效 Ub，以計算含零點銜接的驗證結果&#x27;, true);
@@ -13579,7 +13654,7 @@ html&gt;body{padding:0}&lt;/style&gt;
         }
         outputs.u3.textContent = format(voltage3);
         outputs.i3.textContent = format(predicted3);
-        outputs.error3.textContent = (error3 &gt; 0 ? &#x27;+&#x27; : &#x27;&#x27;) + format(error3, 3);
+        outputs.error3.textContent = formatSigned(error3, 3);
         const insideJoin = u3 !== 0 &amp;&amp; Math.abs(u3) &lt; ub;
         showMessage(validationStatus, insideJoin ? &#x27;銜接區預測 · 驗證點不參與係數求解&#x27; : &#x27;驗證點不參與係數求解&#x27;);
         computed.validation = { u_V: u3, measured_A: measured3, rebuilt_V: voltage3, predicted_A: predicted3, error_mA: error3, insideJoin };
@@ -13589,9 +13664,16 @@ html&gt;body{padding:0}&lt;/style&gt;
         if (!state) return;
         const model = state.modelContent || state;
         if (model.tool !== tool || model.version !== 1) return;
+        // Saving can synchronously echo this state; never write it back into an active edit.
+        if (state.privateContent &amp;&amp; state.privateContent.editSession === editSession) return;
+        if (Object.values(fields).includes(document.activeElement)) {
+          pendingRestore = state;
+          return;
+        }
+        pendingRestore = null;
         const saved = (state.privateContent &amp;&amp; state.privateContent.inputs) || model.inputs || {};
         Object.entries(saved).forEach(([key, value]) =&gt; {
-          if (fields[key] &amp;&amp; (typeof value === &#x27;number&#x27; || typeof value === &#x27;string&#x27;)) fields[key].value = String(value);
+          if (fields[key] &amp;&amp; (typeof value === &#x27;number&#x27; || typeof value === &#x27;string&#x27;) &amp;&amp; fields[key].value !== String(value)) fields[key].value = String(value);
         });
         dataSource = model.dataSource === &#x27;fictional-example&#x27; ? &#x27;fictional-example&#x27; : &#x27;manual-input&#x27;;
         if (state.privateContent &amp;&amp; typeof state.privateContent.checksOpen === &#x27;boolean&#x27;) checks.open = state.privateContent.checksOpen;
@@ -13604,12 +13686,15 @@ html&gt;body{padding:0}&lt;/style&gt;
         const numericInputs = Object.fromEntries(Object.entries(fields).map(([key]) =&gt; [key, Number.isFinite(number(key)) ? number(key) : null]));
         const result = window.openai.setWidgetState({
           modelContent: { tool, version: 1, dataSource, assumptions: { steadyState: true, backEmfNeglected: true, VmodelEqualsVref: true, noRuntimeMeasuredCurrentCorrection: true }, inputs: numericInputs, derived: computed },
-          privateContent: { inputs: rawInputs, checksOpen: checks.open }
+          privateContent: { inputs: rawInputs, checksOpen: checks.open, editSession }
         });
         if (result &amp;&amp; result.catch) result.catch(() =&gt; {});
       }
 
-      Object.values(fields).forEach(field =&gt; field.addEventListener(&#x27;input&#x27;, () =&gt; { dataSource = &#x27;manual-input&#x27;; update(); save(); }));
+      Object.values(fields).forEach(field =&gt; {
+        field.addEventListener(&#x27;input&#x27;, () =&gt; { pendingRestore = null; dataSource = &#x27;manual-input&#x27;; update(); save(); });
+        field.addEventListener(&#x27;blur&#x27;, () =&gt; setTimeout(() =&gt; { if (pendingRestore) restore(pendingRestore); }, 0));
+      });
       checks.addEventListener(&#x27;click&#x27;, event =&gt; { if (event.target.closest(&#x27;summary&#x27;)) setTimeout(save, 0); });
       window.addEventListener(&#x27;openai:set_globals&#x27;, event =&gt; { if (event.detail &amp;&amp; event.detail.globals &amp;&amp; event.detail.globals.widgetState) restore(event.detail.globals.widgetState); });
       update();
@@ -14406,8 +14491,8 @@ html&gt;body{padding:0}&lt;/style&gt;
 </script>
 </div>
 <p>工具以 <code>V_model = V_ref</code> 計算；正、負向分別輸入。顯示的第三點誤差用於對照實驗資料，不自動判定硬體驗證通過。</p>
-<h4 id="h-131">保留零點：偏移隨電壓幅度加入</h4>
-<p>固定偏移直接套到 <code>u = 0</code>，會得到非零電壓。改用以下統一公式：</p>
+<h4 id="h-131">零附近與外側，使用連續的兩段直線</h4>
+<p>內側應保留原本正確的零點，外側則保留已校準的比例＋偏移。仍使用同一條統一公式：</p>
 <div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
 \begin{aligned}
 u_{\mathrm{cal}}&amp;=K_v u+w(u)V_{\mathrm{bias}}\\
@@ -14416,66 +14501,115 @@ w(u)&amp;=\min\!\left(\frac{|u|}{U_b},1\right),\qquad U_b&gt;0
 $$</div>
 <ul>
 <li><code>u = 0</code>：偏移為零，保留零點。</li>
-<li><code>|u| = Ub / 2</code>：加入一半偏移。</li>
-<li><code>|u| ≥ Ub</code>：加入完整偏移，恢復非零工作區的比例＋偏移公式。</li>
+<li><code>|u| &lt; Ub</code>：偏移隨幅度加入，結果是一條過原點的內側直線。</li>
+<li><code>|u| ≥ Ub</code>：加入完整偏移，沿用外側直線。</li>
 </ul>
-<p><code>Ub</code> 初始可選最接近零、且可靠校準的工作點電壓幅度。若要保留兩個校準點的原求解結果，<code>Ub</code> 不應大於兩點中較小的電壓幅度。這是連續的分段直線，不增加動態狀態或濾波延遲。</p>
-<p>沿用負向範例，令 <code>Ub = 2.2 V</code>：</p>
+<p><strong>每個方向是兩段直線，交點連續；不增加濾波器或動態狀態。</strong></p>
+<h4 id="h-132">由內側斜率求轉折幅度 Ub</h4>
+<p>使用者回憶的負向擬合為：</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="可水平捲動的表格"><table>
 <thead><tr>
-<th>基準電壓 <code>u</code></th>
-<th>偏移比例 <code>w</code></th>
-<th>修正電壓</th>
-<th>預測穩態電流</th>
+<th>區域</th>
+<th>原擬合式，電壓單位 V</th>
 </tr></thead>
 <tbody>
 <tr>
-<td>0 V</td>
-<td>0</td>
-<td>0 V</td>
-<td>0 A</td>
+<td>內側、接近零</td>
+<td><code>u_cal = 0.53 &#215; u + 0.034</code></td>
 </tr>
 <tr>
-<td>−1.1 V</td>
-<td>0.5</td>
-<td>−0.8 V</td>
-<td>−0.08 A</td>
-</tr>
-<tr>
-<td>−2.2 V</td>
-<td>1</td>
-<td>−1.6 V</td>
-<td>−0.16 A</td>
-</tr>
-<tr>
-<td>−3.5 V</td>
-<td>1</td>
-<td>−4.5 V</td>
-<td>−0.45 A</td>
+<td>外側、較負</td>
+<td><code>u_cal = 0.90 &#215; u + 1.389</code></td>
 </tr>
 </tbody></table></div>
-<p><code>−1.1 V</code> 的結果是銜接公式的預測，仍需實測確認。</p>
-<h4 id="h-132">正、負向如何共用或分別設定</h4>
-<p>正、負向使用相同處理原理。每側保存 <code>Kv</code>、有號 <code>bias_V</code> 與正值 <code>Ub_V</code>。</p>
-<p>若兩側近似對稱，可以共用斜率與幅度：</p>
+<p>兩條原直線相交於約 <code>−3.662 V</code>。但內側偏移 <code>0.034 V</code> 會破壞零點，因此優先用零附近資料<strong>重新擬合過原點直線</strong>，而不是立即再增加一段。重新擬合後，內側斜率可能不再是 <code>0.53</code>。</p>
+<p>以下先保留 <code>K_in_neg = 0.53</code>、移除內側偏移，作為可測試候選。令內、外側在同一點相等：</p>
 <div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
 \begin{aligned}
-K_{v,+}&amp;=K_{v,-}=K_v\\
-V_{\mathrm{bias},+}&amp;=-B_0,\qquad V_{\mathrm{bias},-}=+B_0\\
-U_{b,+}&amp;=U_{b,-}=U_b
+K_{\mathrm{in},-}(-U_{b,-})
+&amp;=K_{v,-}(-U_{b,-})+V_{\mathrm{bias},-}\\
+U_{b,-}
+&amp;=\frac{V_{\mathrm{bias},-}}{K_{v,-}-K_{\mathrm{in},-}}
+=\frac{1.389}{0.90-0.53}
+\approx3.754054\ \mathrm{V}
 \end{aligned}
 $$</div>
-<p><code>B_0</code> 為偏移幅度。若正、負向實測不對稱，各側分別用兩個工作點求係數；公式與程式結構不變。</p>
-<p><strong>曲線依基準電壓 <code>u</code> 的方向選擇。</strong>暫態時，電壓與電流異號是合理的。例如正電流施加負電壓，電流會下降，不需要因為異號就取消修正或立刻將模型電流改成負值。</p>
-<p>實際死區續流仍取決於切換當時的電流方向；本式是由穩態資料建立的電壓映射，不是完整的暫態死區重建。相關原理見 <a href="https://www.ti.com/lit/an/slvaf84/slvaf84.pdf">TI：Delay and Dead Time</a>。若校準資料已包含總電壓損失，不再疊加同一項固定死區補償，以免重複扣除。</p>
-<h4 id="h-133">正斜率：避免零附近反向</h4>
+<p>因此負向候選為：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+u_{\mathrm{cal}}=
+\begin{cases}
+0.53u,&amp;-U_b\le u\le0\\
+0.90u+1.389,&amp;u&lt;-U_b
+\end{cases}
+\qquad U_b\approx3.754054\ \mathrm{V}
+$$</div>
+<p>例如 <code>u = −1 V</code>，內側得到 <code>−0.53 V</code>；若誤用外側式，卻會得到 <code>+0.489 V</code>。<strong>用錯區域，斜率與偏移都會出錯；不能只用穩態電流誤差大小判斷是否適合閉迴路。</strong></p>
+<p><code>Ub</code> 由兩條校準直線的交點決定，再與實測轉折及 deadtime 換算幅度比較，不直接設成 deadtime 暫存器的數值。外側兩個求解點應位於 <code>|u| ≥ Ub</code> 的範圍。</p>
+<h4 id="h-133">正、負向如何共用或分別設定</h4>
+<p>兩側使用相同原理，每側保存外側斜率 <code>Kv</code>、有號偏移 <code>bias_V</code> 與正值轉折幅度 <code>Ub_V</code>。由各側內斜率求交點：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\begin{aligned}
+U_{b,+}&amp;=\frac{V_{\mathrm{bias},+}}{K_{\mathrm{in},+}-K_{v,+}}\\
+U_{b,-}&amp;=\frac{V_{\mathrm{bias},-}}{K_{v,-}-K_{\mathrm{in},-}}
+\end{aligned}
+$$</div>
+<p>計算結果必須有限且大於零，內、外側斜率都必須為正。斜率相同且偏移為零時，直接用單一過原點直線；斜率相同但偏移非零時，沒有有限交點，不能強行套用。</p>
+<p>若正、負向近似對稱，可以共用斜率與 <code>Ub</code>，偏移取相反號。以下正向是負向候選的<strong>鏡射假設</strong>，不是已量測係數：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+u_{\mathrm{cal}}=
+\begin{cases}
+0.90u-1.389,&amp;u&gt;U_b\\
+0.53u,&amp;-U_b\le u\le U_b\\
+0.90u+1.389,&amp;u&lt;-U_b
+\end{cases}
+\qquad U_b\approx3.754054\ \mathrm{V}
+$$</div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="可水平捲動的表格"><table>
+<thead><tr>
+<th>基準電壓 <code>u</code></th>
+<th>校正電壓 <code>u_cal</code></th>
+</tr></thead>
+<tbody>
+<tr>
+<td>−5 V</td>
+<td>−3.111 V</td>
+</tr>
+<tr>
+<td>−3 V</td>
+<td>−1.590 V</td>
+</tr>
+<tr>
+<td>−1 V</td>
+<td>−0.530 V</td>
+</tr>
+<tr>
+<td>0 V</td>
+<td>0 V</td>
+</tr>
+<tr>
+<td>+1 V</td>
+<td>+0.530 V</td>
+</tr>
+<tr>
+<td>+3 V</td>
+<td>+1.590 V</td>
+</tr>
+<tr>
+<td>+5 V</td>
+<td>+3.111 V</td>
+</tr>
+</tbody></table></div>
+<p>正負合併後共有三段；<strong>每個方向仍是內、外兩段</strong>。若兩側不對稱，分別求係數；偏移的正負號依實際擬合結果，不預設所有驅動器都與本例相同。</p>
+<p><strong>曲線依基準電壓 <code>u</code> 的方向選擇。</strong>暫態時，電壓與電流異號是合理的。例如正電流施加負電壓，電流會下降，不因為異號就取消修正或立刻將模型電流改成負值。</p>
+<p>實際死區續流取決於切換當時的電流方向；本式是由穩態資料建立的電壓映射，不是完整的暫態死區重建。相關原理見 <a href="https://www.ti.com/lit/an/slvaf84/slvaf84.pdf">TI：Delay and Dead Time</a>。若校準資料已包含總電壓損失，不再疊加同一項固定死區補償。</p>
+<h4 id="h-134">正斜率：避免零附近反向</h4>
 <p>正斜率的意思是：<strong>原命令更負，修正後也應更負；原命令增加，修正後也應增加。</strong>它不表示電壓必須為正。</p>
 <p>在負向零點銜接區，<code>w = −u / Ub_neg</code>，所以：</p>
 <div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
 u_{\mathrm{cal}}=
 \left(K_{v,-}-\frac{V_{\mathrm{bias},-}}{U_{b,-}}\right)u
 $$</div>
-<p>範例斜率為 <code>2.230769 − 3.307692 / 2.2 = 0.727273</code>。因此 <code>u = −0.1 V</code> 約得到 <code>−0.073 V</code>，<code>u = −0.2 V</code> 約得到 <code>−0.145 V</code>，方向一致。</p>
+<p>本次候選的內側斜率為 <code>0.90 − 1.389 / 3.754054 ≈ 0.53</code>。因此 <code>u = −0.1 V</code> 得到約 <code>−0.053 V</code>，<code>u = −0.2 V</code> 得到約 <code>−0.106 V</code>，方向一致。</p>
 <p>若改成 <code>Kv_neg = 1</code>、<code>bias_neg_V = 3 V</code>、<code>Ub_neg_V = 2 V</code>，斜率變為 <code>−0.5</code>，<code>u = −0.2 V</code> 卻得到 <code>+0.1 V</code>，方向反轉，不能使用。</p>
 <p>各側必須同時通過外側與零附近斜率檢查：</p>
 <div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
@@ -14485,7 +14619,7 @@ K_{v,-}&amp;&gt;0,&amp;\quad K_{v,-}-\frac{V_{\mathrm{bias},-}}{U_{b,-}}&amp;&gt
 \end{aligned}
 $$</div>
 <p>此檢查確保電壓映射方向一致，不等同於整個閉迴路的穩定性驗證。</p>
-<h4 id="h-134">固定校準係數，抽出 V_model 作整體微調</h4>
+<h4 id="h-135">固定校準係數，抽出 V_model 作整體微調</h4>
 <p>基準電壓仍固定使用 <code>u = V_ref &#215; m</code>；<code>V_model</code> 在最外層縮放整條修正關係：</p>
 <div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
 \hat u=
@@ -14498,7 +14632,7 @@ V_{\mathrm{bias},\sigma}
 $$</div>
 <p><code>σ</code> 依 <code>u</code> 選擇正向或負向。調整 <code>V_model</code> 時，比例與偏移一起縮放；不重新改動已校準的 <code>Kv</code>、<code>bias_V</code> 或 <code>Ub_V</code>。<code>V_model</code> 是設定值，不直接代入執行期 ADC 母線量測。</p>
 <p>換馬達仍需設定該馬達的 <code>R</code>、<code>L</code>。跨馬達或驅動器若只剩近似整體縮放誤差，可以微調 <code>V_model</code>；若斜率與偏移各自改變，則需要重新校準。不同驅動器都具有線性，不代表它們具有相同斜率與偏移。</p>
-<h4 id="h-135">接入後向歐拉 RL 模型</h4>
+<h4 id="h-136">接入後向歐拉 RL 模型</h4>
 <p><code>R</code> 使用 Ω、<code>L</code> 使用 mH、<code>Ts</code> 使用 ms；20 kHz 對應 <code>Ts = 0.05 ms</code>：</p>
 <div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
 \begin{aligned}
@@ -14506,18 +14640,33 @@ a&amp;=\frac{L}{L+RT_s},\qquad b=\frac{T_s}{L+RT_s}\\
 \hat i[k+1]&amp;=a\hat i[k]+b\hat u[k]
 \end{aligned}
 $$</div>
-<p><code>u_hat[k]</code> 必須對應模型由 <code>k</code> 推進至 <code>k+1</code> 的實際作用區間。狀態 <code>iq1</code> 持續保留；零命令或方向切換時不重置。校正公式本身不另外增加一拍延遲。</p>
+<p><code>u_hat[k]</code> 必須對應模型由 <code>k</code> 推進至 <code>k+1</code> 的實際作用區間。狀態 <code>iq1</code> 持續保留；零命令或方向切換時不重置。零電壓只代表輸入為零，既有電流仍按 RL 模型逐步衰減。校正公式本身不另外增加一拍延遲。</p>
+<p>CPU 初始化或參數更新時執行；以下係數為前述測試候選：</p>
 <pre tabindex="0" role="region" aria-label="可水平捲動的程式碼"><code class="language-c">
+// 負向候選：內側 0.53u、外側 0.90u + 1.389。
+Kv_neg     = 0.90f;
+bias_neg_V = 1.389f;
+Ub_neg_V   = 1.389f / (0.90f - 0.53f);
+
+// 正向先採鏡射假設，後續以正向資料確認。
+Kv_pos     = 0.90f;
+bias_pos_V = -1.389f;
+Ub_pos_V   = Ub_neg_V;
+
 // 參數更新時預先計算。
 voltage_gain = V_model / V_ref;
 inv_Ub_pos   = 1.0f / Ub_pos_V;
 inv_Ub_neg   = 1.0f / Ub_neg_V;
 
+Ts_ms = 0.05f;
 float denom = L_mH + R * Ts_ms;
 a = L_mH / denom;
 b = Ts_ms / denom;
-
-// 以下每個模型作用區間執行一次。
+// 保留 iq1 狀態，不因參數更新而重置。
+</code></pre>
+<p>設定前檢查 <code>R &gt; 0</code>、<code>L_mH &gt; 0</code>、<code>V_ref &gt; 0</code>、<code>V_model &gt; 0</code>，各側轉折幅度有限且為正，並通過前述正斜率條件。係數有效後，再提供給 CLA。</p>
+<p>CLA 每個模型作用區間執行一次；除法已在初始化時完成：</p>
+<pre tabindex="0" role="region" aria-label="可水平捲動的程式碼"><code class="language-c">
 // CMP 是該區間實際作用、加上 2500 後的絕對比較值，不是有號 c。
 float m = ((float)cmp_u_applied - (float)cmp_w_applied)
         * (1.0f / 5000.0f);
@@ -14541,7 +14690,8 @@ if (w &gt; 1.0f) {
     w = 1.0f;
 }
 
-float u_hat = voltage_gain * (kv * u + bias * w);
+float u_cal = kv * u + bias * w;
+float u_hat = voltage_gain * u_cal;
 iq1 = a * iq1 + b * u_hat;
 </code></pre>
 <p>兩路 CMP 先轉浮點再相減，避免無號下溢，也保留有效命令的半 count。使用已作用區間的命令歷史；不是將同一次 PI 剛算出的新命令，提前當成馬達已感受到的電壓。</p>
@@ -14552,15 +14702,16 @@ w       = min(|u| / Ub_side, 1)
 u_hat   = (V_model / V_ref) &#215; (Kv_side &#215; u + bias_side &#215; w)
 iq1_new = a &#215; iq1_previous + b &#215; u_hat_applied_interval
 </code></pre>
-<h4 id="h-136">未參與求解的工作點，決定公式是否足夠</h4>
+<h4 id="h-137">未參與求解的工作點，決定公式是否足夠</h4>
 <ol>
-<li>用同方向兩個穩態點求解，固定 <code>R</code>、<code>L</code>、<code>V_ref</code>。</li>
-<li>不再調參數，檢查第三、第四個非求解工作點。</li>
-<li>檢查零點與 <code>Ub</code> 內側的銜接範圍。</li>
+<li>固定 <code>R</code>、<code>L</code>、<code>V_ref</code>；用同方向外側兩點求 <code>Kv</code>、<code>Vbias</code>，內側資料則擬合過原點斜率。</li>
+<li>計算 <code>Ub</code>，確認交點位於合理區域，且兩條線在交點連續。</li>
+<li>固定係數，檢查內側、外側各自未參與求解的工作點，以及零點與轉折附近。</li>
 <li>再檢查 P2P 暫態，包含電壓與電流異號的區段。</li>
 </ol>
-<p>若第三點不吻合，先確認穩態、電流換算與資料一致性；必要時使用三個以上工作點共同擬合比例＋偏移，降低兩點量測誤差。若殘差仍隨幅度呈現系統性變化，情境②的直線近似不足，單靠 <code>V_model</code> 微調不能修正這種誤差。</p>
-<p>本關完成公式與實作對照；實際參數、作用區間及驗證結果在第三關接續確認。</p><p class="gate-return"><a href="#voltage-input-calibration-overview">返回關卡總覽</a></p></div></section>
+<p>若非求解點不吻合，先確認穩態、電流換算與資料一致性，再用同區域多個工作點重新擬合。只有轉折附近不吻合時，先檢查交點是否符合實測；不因單一離群點就增加分段。</p>
+<p><strong>內側擬合出小偏移，不代表一定要增加第三段。</strong>先重新擬合過原點；只有零附近仍有可重複、隨幅度變化的系統性殘差，兩段確實無法涵蓋，才評估每側再增加一段。單靠 <code>V_model</code> 微調不能消除這類形狀誤差。</p>
+<p>本關完成公式與實作對照；候選係數、作用區間及閉迴路 jitter 結果在第三關接續驗證。</p><p class="gate-return"><a href="#voltage-input-calibration-overview">返回關卡總覽</a></p></div></section>
 <section class="subsection" aria-labelledby="voltage-input-calibration-gate-3" hidden>
 <h3 tabindex="-1" id="voltage-input-calibration-gate-3">第三關｜韌體實作與驗證分析</h3>
 <div class="section-body"><p><strong>理解狀態：待拆解。</strong></p>
