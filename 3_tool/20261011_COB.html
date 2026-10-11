@@ -442,6 +442,20 @@
 <li><a href="#implementation-test-current-observer-cla">CLA 實作與時序</a></li>
 <li><a href="#implementation-test-current-observer-test">公司測試方式</a></li>
 </ul></div>
+<div class="toc-chapter" data-nav-chapter="implementation-test-polynomial-residual">
+<div class="chapter-row">
+<button type="button" class="chapter-toggle" aria-expanded="false" aria-controls="subnav-implementation-test-polynomial-residual" aria-label="展開小節：實作測試｜多項式電壓校正＋RL＋殘差低通比例修正"><span aria-hidden="true">▸</span></button>
+<a class="chapter-link" href="#implementation-test-polynomial-residual">多項式＋RL＋殘差低通比例修正</a>
+</div>
+<ul class="subnav" id="subnav-implementation-test-polynomial-residual" hidden>
+<li><a href="#implementation-test-polynomial-residual-signals">訊號定義與分工</a></li>
+<li><a href="#implementation-test-polynomial-residual-equations">完整公式</a></li>
+<li><a href="#implementation-test-polynomial-residual-filter">殘差低通係數設定</a></li>
+<li><a href="#implementation-test-polynomial-residual-gain">Ko 比例修正設定</a></li>
+<li><a href="#implementation-test-polynomial-residual-code">C 實作與中斷時序</a></li>
+<li><a href="#implementation-test-polynomial-residual-example">數值範例</a></li>
+<li><a href="#implementation-test-polynomial-residual-test">首輪測試與保護</a></li>
+</ul></div>
 
     </nav>
     <main id="reading" tabindex="-1">
@@ -11950,6 +11964,402 @@ iq1_new = a_rl &#215; iq1_previous + b_rl &#215; u_hat
 <div class="section-body"><p><strong>理解狀態：待拆解。</strong></p>
 <p>討論範圍：公式如何接入既有 RL 模型、參數如何調整，以及結果如何判讀。</p>
 <p>完成後應能理解：依程式與校準步驟進行測試，並知道失準時該調整什麼。</p><p class="gate-return"><a href="#voltage-input-calibration-overview">返回關卡總覽</a></p></div></section>
+</article>
+<article class="chapter" aria-labelledby="implementation-test-polynomial-residual" data-section-kind="implementation-polynomial-residual" hidden>
+<h2 tabindex="-1" id="implementation-test-polynomial-residual">實作測試｜多項式電壓校正＋RL＋殘差低通比例修正</h2>
+<div class="chapter-lead"><p><strong>本輪優先測試候選；新增殘差修正尚待實機驗證。</strong> 本章為已確認的自研方案（<code>inference</code>），不代表已確認 ACS 內部接法；既有章節保留供對照。</p>
+<p>多項式先校正主要電壓誤差，RL 負責電流預測，量測電流只透過「殘差低通＋有限比例」修正模型狀態。先保留目前已改善 jitter 的多項式與電壓重建，再逐步加入少量殘差修正。</p></div>
+<section class="subsection" aria-labelledby="implementation-test-polynomial-residual-signals">
+<h3 tabindex="-1" id="implementation-test-polynomial-residual-signals">訊號定義與分工</h3>
+<div class="section-body"><div class="table-wrap" tabindex="0" role="region" aria-label="可水平捲動的表格"><table class="signal-definitions">
+<thead><tr>
+<th>符號</th>
+<th>定義</th>
+<th>單位</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>m_applied</code></td>
+<td>對應作用區間、兩路實寫整數 CMP 重建的有號有效命令</td>
+<td>無單位</td>
+</tr>
+<tr>
+<td><code>d_lookup</code></td>
+<td>經既有平滑後、只用來計算倍率的多項式輸入；座標沿用原校準定義</td>
+<td>duty 或 V，依原校準</td>
+</tr>
+<tr>
+<td><code>Kv</code></td>
+<td>多項式輸出的電壓校正倍率</td>
+<td>無單位</td>
+</tr>
+<tr>
+<td><code>Vmodel</code></td>
+<td>固定的模型電壓尺度</td>
+<td>V</td>
+</tr>
+<tr>
+<td><code>u_hat</code></td>
+<td>送入 RL 的校正電壓</td>
+<td>V</td>
+</tr>
+<tr>
+<td><code>iq_aligned</code></td>
+<td>與目前模型狀態同時刻的量測電流</td>
+<td>A</td>
+</tr>
+<tr>
+<td><code>iq1</code></td>
+<td>跨中斷保留、包含比例修正的估測電流狀態</td>
+<td>A</td>
+</tr>
+<tr>
+<td><code>residual_f</code></td>
+<td>跨中斷保留的低通後電流殘差</td>
+<td>A</td>
+</tr>
+<tr>
+<td><code>Ko</code></td>
+<td>殘差比例增益</td>
+<td>無單位</td>
+</tr>
+</tbody></table></div>
+<p>兩個平滑支路有不同任務：</p>
+<ul>
+<li>多項式輸入平滑：降低 <code>Kv</code> 隨微小命令變動而跳動；沿用<a href="#voltage-input-calibration-gate-2">校準第二關</a>，本章不更動其策略。</li>
+<li>殘差低通濾波器（low-pass filter）：削弱量測電流透過校正支路帶入的高頻雜訊。</li>
+</ul>
+<p>原始 <code>m_applied</code> 留在最後的電壓乘法路徑。平滑後的輸入只決定倍率，不能取代原始命令。若原多項式以基準電壓擬合，就繼續傳入該電壓座標；若以 duty 擬合，就傳入 duty。正負號、分段及正規化方式均沿用原校準。</p></div></section>
+<section class="subsection" aria-labelledby="implementation-test-polynomial-residual-equations">
+<h3 tabindex="-1" id="implementation-test-polynomial-residual-equations">完整公式</h3>
+<div class="section-body"><h4 id="h-137">先重建與校正模型電壓</h4>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+m[k]=\frac{\mathrm{CMP}_{U,\mathrm{applied}}[k]-\mathrm{CMP}_{W,\mathrm{applied}}[k]}{5000}
+$$</div>
+<p>兩路 CMP 先轉成浮點再相減，避免無號下溢，也保留差值所對應的半個有效 count。</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\begin{aligned}
+K_v[k]&amp;=P\!\left(d_{\mathrm{lookup}}[k]\right)\\
+\hat u[k]&amp;=V_{\mathrm{model}}K_v[k]m[k]
+\end{aligned}
+$$</div>
+<p>若沿用固定基準電壓 <code>V_ref</code>，等價寫法為：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\begin{aligned}
+u_{\mathrm{base}}[k]&amp;=V_{\mathrm{ref}}m[k]\\
+\hat u[k]&amp;=\frac{V_{\mathrm{model}}}{V_{\mathrm{ref}}}K_v[k]u_{\mathrm{base}}[k]
+\end{aligned}
+$$</div>
+<p>本版使用固定 <code>Vmodel</code>，不加入即時 ADC 母線量測。多項式已描述校準時的整體壓差，因此不再自動疊加另一份 deadtime／<code>u_loss</code> 修正，以免重複補償。</p>
+<p>這裡只校正模型電壓，不改寫實際 PWM；日後若 PI 使用 <code>iq1</code>，仍會透過閉迴路間接改變 PWM。</p>
+<h4 id="h-138">後向歐拉 RL 核心</h4>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\begin{aligned}
+a&amp;=\frac{L}{L+RT_s}\\
+b&amp;=\frac{T_s}{L+RT_s}=\frac{1-a}{R}
+\end{aligned}
+$$</div>
+<p><code>R</code> 使用 Ω；<code>L</code>／<code>T_s</code> 可使用 H／s，或一致使用 mH／ms。兩套數值寫法得到相同的 <code>a</code> 與 <code>b</code>；<code>b</code> 的單位是 A/V。</p>
+<p>純 RL 更新為：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\hat i[k+1]=a\hat i[k]+b\hat u[k]
+$$</div>
+<h4 id="h-139">加入殘差低通與有限比例修正</h4>
+<p>先用同時刻的量測與估測相減，再濾波，最後把修正保留到下一拍模型狀態：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\begin{aligned}
+r[k]&amp;=i_{\mathrm{meas}}[k]-\hat i[k]\\
+r_f[k]&amp;=r_f[k-1]+\beta_r\left(r[k]-r_f[k-1]\right)\\
+\kappa&amp;=(1-a)K_o\\
+\hat i[k+1]&amp;=a\hat i[k]+b\hat u[k]+\kappa r_f[k]
+\end{aligned}
+$$</div>
+<p>等效的電壓修正為：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+u_{\mathrm{corr}}[k]=K_oRr_f[k]
+$$</div>
+<p>因為 <code>bR = 1 − a</code>，把 <code>u_corr</code> 加到模型輸入，與上述電流狀態修正等價。這不是把電流殘差直接當作伏特，也不是直接加上 <code>Ko &#215; residual_f</code>。</p>
+<p>本章採用「修正進入模型狀態」：下一拍從修正後的 <code>iq1</code> 繼續估測。它與舊章「純模型狀態不變、只在輸出端加偏差」的接法不同。後向歐拉描述的是 RL 核心；新增校正的離散時序以上式為準。</p>
+<p>公式純文字對照：</p>
+<pre tabindex="0" role="region" aria-label="可水平捲動的程式碼"><code class="language-text">
+m       = (CMP_U_applied − CMP_W_applied) / 5000
+Kv      = P(d_lookup)
+u_hat   = Vmodel &#215; Kv &#215; m
+a       = L / (L + R &#215; Ts)
+b       = Ts / (L + R &#215; Ts)
+r[k]    = i_meas[k] − iq1[k]
+rf[k]   = rf[k−1] + beta_r &#215; (r[k] − rf[k−1])
+kappa   = (1 − a) &#215; Ko
+iq1[k+1]= a &#215; iq1[k] + b &#215; u_hat[k] + kappa &#215; rf[k]
+</code></pre></div></section>
+<section class="subsection" aria-labelledby="implementation-test-polynomial-residual-filter">
+<h3 tabindex="-1" id="implementation-test-polynomial-residual-filter">殘差低通係數設定</h3>
+<div class="section-body"><p>採用一階低通，時間常數為 <code>tau_f</code>：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\beta_r=\frac{T_s}{\tau_f+T_s}
+$$</div>
+<ul>
+<li><code>tau_f</code> 越大：殘差跟隨越慢，高頻量測雜訊介入越少，但真實誤差的修正也會落後。</li>
+<li><code>tau_f</code> 越小：修正較快，量測雜訊介入較多。</li>
+<li><code>beta_r = 1</code>：沒有額外殘差平滑。</li>
+</ul>
+<p>首輪先令殘差濾波時間常數等於馬達電氣時間常數，不新增一顆獨立頻寬參數：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\tau_f=\frac{L}{R}
+\quad\Longrightarrow\quad
+\beta_r=1-a
+$$</div>
+<p>以 <code>R = 10 Ω</code>、<code>L = 10 mH</code>、<code>T_s = 50 &#181;s</code> 為例：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="可水平捲動的表格"><table>
+<thead><tr>
+<th><code>tau_f</code></th>
+<th><code>beta_r</code></th>
+<th>用途</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>1 ms</td>
+<td>0.047619</td>
+<td>本例首輪起點，等於 <code>L/R</code></td>
+</tr>
+<tr>
+<td>5 ms</td>
+<td>0.009901</td>
+<td>較慢修正</td>
+</tr>
+<tr>
+<td>10 ms</td>
+<td>0.004975</td>
+<td>更慢修正</td>
+</tr>
+</tbody></table></div>
+<p><code>beta_r = 1 − a</code> 是簡單的測試起點，不代表所有馬達的最佳設定。濾波會改變相位與校正動態，不能保證每個頻率或位置 jitter 都改善。</p></div></section>
+<section class="subsection" aria-labelledby="implementation-test-polynomial-residual-gain">
+<h3 tabindex="-1" id="implementation-test-polynomial-residual-gain">Ko 比例修正設定</h3>
+<div class="section-body"><p>在固定工作點、穩定收斂且未限幅時，低通後殘差的直流增益為 1，穩態結果為：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\hat i_{\mathrm{ss}}
+=
+\frac{\hat u_{\mathrm{ss}}/R+K_oi_{\mathrm{meas,ss}}}{1+K_o}
+$$</div>
+<p>這個式子直接說明：<code>Ko</code> 越大，估測越依賴量測。若量測平均值準確，模型原有的固定偏差會剩下 <code>1/(1+Ko)</code>：</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="可水平捲動的表格"><table>
+<thead><tr>
+<th><code>Ko</code></th>
+<th>原模型固定偏差剩餘比例</th>
+<th>量測的直流權重</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>100%</td>
+<td>0%</td>
+</tr>
+<tr>
+<td>0.1</td>
+<td>90.9%</td>
+<td>9.1%</td>
+</tr>
+<tr>
+<td>0.25</td>
+<td>80%</td>
+<td>20%</td>
+</tr>
+<tr>
+<td>0.5</td>
+<td>66.7%</td>
+<td>33.3%</td>
+</tr>
+<tr>
+<td>1</td>
+<td>50%</td>
+<td>50%</td>
+</tr>
+</tbody></table></div>
+<p><code>Ko = 0.25</code> 只消除原固定偏差的 20%；<code>Ko = 1</code> 只減半，不會完全對齊。量測本身的零點偏差也會參與上述權重；高頻雜訊則由整個殘差支路的頻率響應決定，不能用直流權重直接代替。</p>
+<p>建議先測 <code>Ko = 0 → 0.1 → 0.25</code>，確認原有 jitter 改善仍保留，再決定是否提高到 <code>0.5</code> 或 <code>1</code>。調慢低通不會增加穩態補償量；修正量與修正速度分別由 <code>Ko</code> 和 <code>beta_r</code> 控制，但兩者都會影響動態。</p></div></section>
+<section class="subsection" aria-labelledby="implementation-test-polynomial-residual-code">
+<h3 tabindex="-1" id="implementation-test-polynomial-residual-code">C 實作與中斷時序</h3>
+<div class="section-body"><h4 id="h-143">參數與狀態</h4>
+<pre tabindex="0" role="region" aria-label="可水平捲動的程式碼"><code class="language-c">
+typedef struct
+{
+    float a;
+    float b;
+    float kappa;
+    float beta_r;
+    float Vmodel;
+
+    // 多項式輸入座標：
+    // x = (d_lookup - d_center) * d_inv_scale
+    float d_center;
+    float d_inv_scale;
+
+    // Kv = c3*x^3 + c2*x^2 + c1*x + c0
+    float c0;
+    float c1;
+    float c2;
+    float c3;
+} SBP_Params;
+
+typedef struct
+{
+    float iq1;
+    float residual_f;
+    float u_hat_prev;
+} SBP_State;
+
+// 只計算模型電壓，不修改 PWM。
+static inline float SBP_ModelVoltage(
+    const SBP_Params *p,
+    float m_applied,
+    float d_lookup)
+{
+    float x = (d_lookup - p-&gt;d_center)
+            * p-&gt;d_inv_scale;
+
+    // Horner 寫法，不使用 powf。
+    float Kv = ((p-&gt;c3 * x + p-&gt;c2) * x + p-&gt;c1)
+             * x + p-&gt;c0;
+
+    return p-&gt;Vmodel * Kv * m_applied;
+}
+
+// 每拍先推進到目前時間，再建立本拍殘差。
+static inline float SBP_BeginISR(
+    SBP_State *s,
+    const SBP_Params *p,
+    float iq_aligned)
+{
+    // 上一作用區間的電壓、上一拍已濾波殘差，
+    // 將 iq1 推進到本拍。
+    float iq1_now = p-&gt;a * s-&gt;iq1
+                  + p-&gt;b * s-&gt;u_hat_prev
+                  + p-&gt;kappa * s-&gt;residual_f;
+
+    // iq_aligned 與 iq1_now 必須代表同一時刻。
+    float residual = iq_aligned - iq1_now;
+
+    // 本拍濾波殘差，供下一次模型推進使用。
+    s-&gt;residual_f += p-&gt;beta_r
+                   * (residual - s-&gt;residual_f);
+
+    s-&gt;iq1 = iq1_now;
+    return iq1_now;
+}
+</code></pre>
+<p><code>c0…c3</code> 沿用已校準的多項式。未正規化時可設 <code>d_center = 0</code>、<code>d_inv_scale = 1</code>；已正規化時則沿用原中心、尺度與對應係數，不改回大係數的原座標展開式。</p>
+<h4 id="h-144">CPU 預算係數與初始化</h4>
+<pre tabindex="0" role="region" aria-label="可水平捲動的程式碼"><code class="language-c">
+SBP_Params p;
+SBP_State s;
+
+float R = 10.0f;       // ohm
+float L_mH = 10.0f;    // mH
+float Ts_ms = 0.05f;   // 50 us
+float Ko = 0.25f;
+
+float tau_f_ms = L_mH / R;
+float denom = L_mH + R * Ts_ms;
+
+p.a = L_mH / denom;
+p.b = Ts_ms / denom;
+p.kappa = (1.0f - p.a) * Ko;
+p.beta_r = Ts_ms / (tau_f_ms + Ts_ms);
+p.Vmodel = 48.0f;
+
+// 必須另填入既有校準值：
+// p.c0, p.c1, p.c2, p.c3, p.d_center, p.d_inv_scale
+
+// iq_start、u_hat_start 由既有啟動流程取得。
+s.iq1 = iq_start;
+s.residual_f = 0.0f;
+s.u_hat_prev = u_hat_start;
+</code></pre>
+<p>本例得到 <code>a = 0.952381</code>、<code>b = 0.00476190 A/V</code>、<code>kappa = 0.0119048</code>、<code>beta_r = 0.047619</code>。所有除法在 CPU 參數更新時預算；CLA 每拍只做多項式、乘加與狀態更新。</p>
+<p><code>iq_start</code> 是初始化起點，初始化當次不再重複推進同一個作用區間。三個狀態跨中斷保留，不在每拍清零；CPU／CLA 更新參數時須整組安全交接，避免讀到一半新、一半舊的參數。</p>
+<h4 id="h-145">每次中斷的使用順序</h4>
+<pre tabindex="0" role="region" aria-label="可水平捲動的程式碼"><code class="language-c">
+// 1. 取得與模型當前時刻對齊的量測。
+float iq_now = iq_aligned;
+
+// 2. 舊電壓、舊濾波殘差推進到本拍；本拍新殘差留給下一拍。
+float iq1_now = SBP_BeginISR(&amp;s, &amp;p, iq_now);
+
+// 3. 首輪維持目前已驗證的 PI 回授模式。
+//    執行原有 PI、限幅、整數化及 PWM 寫入。
+//    新殘差修正估測器先旁路記錄，不立即切入 PI。
+
+// 4. 以對應作用區間的兩路實寫整數 CMP 重建命令。
+float m_applied = ((float)cmp_u_applied - (float)cmp_w_applied)
+                * (1.0f / 5000.0f);
+
+// 5. 沿用既有多項式輸入平滑與座標。
+float d_lookup = existing_filtered_lookup_input;
+
+// 6. 保存該作用區間的模型電壓，供下次推進使用。
+s.u_hat_prev = SBP_ModelVoltage(&amp;p, m_applied, d_lookup);
+</code></pre>
+<p>時間順序為：保存的 <code>u_hat[k−1]</code>、<code>residual_f[k−1]</code> 先產生 <code>iq1[k]</code>；再以 <code>iq[k] − iq1[k]</code> 更新 <code>residual_f[k]</code>；它在下次產生 <code>iq1[k+1]</code> 時使用。這正好實現上面的更新式，沒有另外添加一拍延遲，也不能在同次中斷把新殘差再加一次。</p>
+<p><code>prev</code> 指與推進區間對應的歷史電壓，不保證等於「上次中斷剛寫入的 CMP」。PWM 真正作用時間、SDFM 量測時間及模型狀態必須沿用已核對的對齊方式；本例不改立即／shadow 模式。</p></div></section>
+<section class="subsection" aria-labelledby="implementation-test-polynomial-residual-example">
+<h3 tabindex="-1" id="implementation-test-polynomial-residual-example">數值範例</h3>
+<div class="section-body"><p>假設固定工作點：</p>
+<pre tabindex="0" role="region" aria-label="可水平捲動的程式碼"><code class="language-text">
+Vmodel = 48 V
+m      = −0.05
+Kv     = 0.6
+R      = 10 Ω
+量測 iq = −0.160 A
+</code></pre>
+<p>因此模型電壓與純 RL 穩態為：</p>
+<div class="math-block" tabindex="0" role="region" aria-label="可水平捲動的公式">$$
+\begin{aligned}
+\hat u&amp;=48\times0.6\times(-0.05)=-1.44\ \mathrm{V}\\
+\hat i_{\mathrm{RL,ss}}&amp;=\frac{-1.44}{10}=-0.144\ \mathrm{A}
+\end{aligned}
+$$</div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="可水平捲動的表格"><table>
+<thead><tr>
+<th><code>Ko</code></th>
+<th>穩態估測電流</th>
+<th>相對量測的偏差</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>−0.1440 A</td>
+<td>+16.0 mA</td>
+</tr>
+<tr>
+<td>0.25</td>
+<td>−0.1472 A</td>
+<td>+12.8 mA</td>
+</tr>
+<tr>
+<td>1</td>
+<td>−0.1520 A</td>
+<td>+8.0 mA</td>
+</tr>
+</tbody></table></div>
+<p>以 <code>Ko = 0.25</code> 為例，殘差為 <code>−0.0128 A</code>，等效電壓修正為 <code>0.25 &#215; 10 &#215; (−0.0128) = −0.032 V</code>，所以估測被往更負的方向拉回，但不會完全貼齊。</p>
+<p>本例只說明固定偏差與有限比例修正的關係，不代表位置 jitter 會按同樣比例下降。</p></div></section>
+<section class="subsection" aria-labelledby="implementation-test-polynomial-residual-test">
+<h3 tabindex="-1" id="implementation-test-polynomial-residual-test">首輪測試與保護</h3>
+<div class="section-body"><p>先固定現有多項式、倍率輸入平滑、<code>R</code>、<code>L</code> 與 <code>Vmodel</code>，使用 <code>beta_r = 1 − a</code>，比較 <code>Ko = 0</code>、<code>0.1</code>、<code>0.25</code>。下一個決策只需要看三件事：</p>
+<ol>
+<li>不同工作點的平均估測偏差是否縮小。</li>
+<li>切入新估測回授後，原有的 jitter 改善是否保留。</li>
+<li>P2P 暫態是否增加落後或振鈴。</li>
+</ol>
+<p>先旁路確認估測，再在原有安全切換流程下測試回授；<code>Ko = 0</code> 應重現同一份多項式＋純 RL 基準。若殘差減少但 jitter 變差，先降低 <code>Ko</code>，不要同時改多項式與電流 PI。</p>
+<p>對無額外延遲、未限幅的線性估測器，<code>0 &lt; a &lt; 1</code>、<code>0 &lt; beta_r ≤ 1</code>、<code>0 ≤ Ko ≤ 1</code> 可使本章內部遞迴穩定；這不保證含 PI、SDFM 與 PWM 延遲的整個閉迴路穩定。</p>
+<ul>
+<li>多項式只在已校準範圍使用，避免未驗證的外插與無效倍率。</li>
+<li>實際量測電流的過流保護保留，不以 <code>iq1</code> 取代。</li>
+<li>殘差限幅、異常凍結及回退沿用平台保護；若觸發，以上線性穩態公式不再直接適用。</li>
+<li>目前範例尚未經 CLA 編譯、執行時間或實機驗證；新增校正量應由小到大測試。</li>
+</ul></div></section>
 </article>
 
     </main>
